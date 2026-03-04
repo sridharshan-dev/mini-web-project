@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚡ Avengers Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@400;500;600;700&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+  :root {
+    --bg: #06060f;
+    --surface: #0d0d1a;
+    --surface2: #141428;
+    --border: #1e1e3f;
+    --gold: #c9a84c;
+    --gold-light: #f0d070;
+    --gold-dark: #8a6a1e;
+    --text: #e8e8f8;
+    --text-dim: #8888aa;
+    --power: #ff3333;
+    --power-glow: rgba(255,51,51,0.4);
+    --reality: #ffd700;
+    --reality-glow: rgba(255,215,0,0.4);
+    --space: #4fc3f7;
+    --space-glow: rgba(79,195,247,0.4);
+    --correct: #4caf50;
+    --wrong: #f44336;
+    --timer-warn: #ff9800;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height:100%; overflow:hidden; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    line-height: 1.4;
+    overflow-x: hidden;
+  }
+
+  /* ── STAR FIELD ── */
+  #stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(79,195,247,0.05) 0%, transparent 50%);
+  }
+  #stars::before, #stars::after {
+    content:''; position:absolute; inset:0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.8) 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 40%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.9) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 30%, rgba(255,255,255,0.8) 0%, transparent 100%),
+      radial-gradient(1px 1px at 15% 70%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 35% 85%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 45%, rgba(255,255,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 15%, rgba(255,255,255,0.9) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 65%, rgba(255,255,255,0.6) 0%, transparent 100%);
+  }
+  #stars::after {
+    background-image:
+      radial-gradient(1.5px 1.5px at 5% 50%, rgba(201,168,76,0.8) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 95% 50%, rgba(79,195,247,0.8) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 25%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 65% 75%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 90%, rgba(255,255,255,0.6) 0%, transparent 100%);
+  }
+
+  /* ── SCREENS ── */
+  .screen {
+    position: fixed; inset: 0; z-index: 10;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .screen.active { display: flex; }
+  .screen-inner { width: 100%; max-width: 500px; }
+
+  /* ── LOGO ── */
+  .logo {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(18px, 5vw, 28px);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    text-shadow: none;
+    filter: drop-shadow(0 0 20px rgba(201,168,76,0.4));
+  }
+  .logo-sub {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 6px;
+    color: var(--text-dim);
+    text-align: center;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 20px; }
+  .form-label {
+    display: block;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .form-input:focus { border-color: var(--gold); }
+  .form-input.upper { text-transform: uppercase; letter-spacing: 4px; }
+
+  /* ── AVATAR GRID ── */
+  .avatar-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .avatar-opt {
+    aspect-ratio: 1;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    user-select: none;
+    overflow: hidden;
+  }
+  .avatar-opt img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .avatar-img {
+    width: 36px; height: 36px; border-radius: 50%; object-fit: cover;
+    border: 2px solid var(--border);
+  }
+  .avatar-opt:hover { border-color: var(--gold); transform: scale(1.05); }
+  .avatar-opt.selected {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.15);
+    box-shadow: 0 0 16px rgba(201,168,76,0.3);
+    transform: scale(1.05);
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 14px 20px;
+    color: #0a0a0f;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-secondary {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  /* ── WAITING ROOM ── */
+  .waiting-header {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .team-display {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+  }
+  .team-avatar-big { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); }
+  .team-info-name { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; }
+  .team-info-sub { font-size: 12px; color: var(--text-dim); letter-spacing: 1px; }
+  .pulse-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--correct); margin-left: auto;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.5)} }
+  .waiting-msg {
+    text-align: center; color: var(--text-dim);
+    font-size: 14px; letter-spacing: 1px;
+    animation: blink 2s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── PHASE BANNER ── */
+  #screen-phase { background: radial-gradient(ellipse at center, rgba(201,168,76,0.15) 0%, transparent 70%); }
+  .phase-number {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(60px, 18vw, 100px);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    filter: drop-shadow(0 0 30px rgba(201,168,76,0.6));
+    text-align: center;
+    animation: phaseIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes phaseIn {
+    from { transform: scale(0.5); opacity: 0; filter: blur(10px) drop-shadow(0 0 30px rgba(201,168,76,0.6)); }
+    to { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 30px rgba(201,168,76,0.6)); }
+  }
+  .phase-label {
+    font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 8px; color: var(--gold); text-align: center;
+    text-transform: uppercase; margin-top: -10px;
+  }
+
+  /* ── HUD BAR ── */
+  .hud {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(6,6,15,0.95);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px;
+    backdrop-filter: blur(10px);
+  }
+  .hud-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
+  .hud-team { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700; flex: 1; }
+  .hud-score {
+    font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700;
+    color: var(--gold);
+  }
+  .hud-phase-q {
+    font-size: 11px; color: var(--text-dim); letter-spacing: 1px;
+    text-align: right;
+  }
+
+  /* ── QUESTION SCREEN ── */
+  #screen-question {
+    padding-top: 70px;
+    padding-bottom: 120px;
+    justify-content: flex-start;
+    overflow-y: auto;
+  }
+  .timer-ring-container {
+    display: flex; justify-content: center; margin-bottom: 16px;
+  }
+  .timer-ring {
+    position: relative; width: 80px; height: 80px;
+  }
+  .timer-ring svg {
+    position: absolute; top:0; left:0;
+    transform: rotate(-90deg);
+  }
+  .timer-ring-bg { fill: none; stroke: var(--surface2); stroke-width: 6; }
+  .timer-ring-fg {
+    fill: none; stroke: var(--gold); stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 220;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 0.9s linear, stroke 0.3s;
+  }
+  .timer-ring-fg.warn { stroke: var(--timer-warn); }
+  .timer-ring-fg.critical { stroke: var(--power); }
+  .timer-value {
+    position: absolute; inset:0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 24px; font-weight: 700;
+  }
+  .question-phase-info {
+    font-size: 11px; color: var(--text-dim); letter-spacing: 3px;
+    text-align: center; text-transform: uppercase; margin-bottom: 10px;
+  }
+  .question-text {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: clamp(18px, 4.5vw, 24px);
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+    margin-bottom: 20px;
+    padding: 0 4px;
+  }
+  .question-media {
+    display: none;
+    justify-content: center;
+    margin: 8px 0 14px;
+  }
+  .question-media img {
+    width: min(100vw - 40px, 360px);
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    background: var(--surface2);
+  }
+  .question-link {
+    display: none;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .option-btn {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 12px;
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    min-height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .option-btn:hover:not(:disabled) { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+  .option-btn.selected { border-color: var(--gold); background: rgba(201,168,76,0.15); }
+  .option-btn.correct { border-color: var(--correct) !important; background: rgba(76,175,80,0.2) !important; }
+  .option-btn.wrong { border-color: var(--wrong) !important; background: rgba(244,67,54,0.2) !important; }
+  .option-btn.removed { opacity: 0.2; pointer-events: none; text-decoration: line-through; }
+  .option-btn:disabled { cursor: not-allowed; }
+  .option-badge {
+    position: absolute; top: 6px; right: 8px;
+    font-size: 10px; color: var(--text-dim); font-weight: 700;
+  }
+
+  /* ── STONES BAR ── */
+  .stones-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(6,6,15,0.97);
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    backdrop-filter: blur(10px);
+  }
+  .stones-label {
+    font-size: 10px; color: var(--text-dim); letter-spacing: 3px;
+    text-transform: uppercase; margin-bottom: 8px; text-align: center;
+  }
+  .stones-row { display: flex; gap: 10px; justify-content: center; }
+  .stone-btn {
+    flex: 1; max-width: 140px;
+    border-radius: 8px;
+    padding: 8px 6px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .stone-btn .s-icon { font-size: 18px; }
+  .stone-btn .s-icon img { width: 18px; height: 18px; object-fit: contain; }
+  .stone-btn .s-count {
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 13px;
+  }
+  .stone-power {
+    background: rgba(255,51,51,0.12);
+    border-color: rgba(255,51,51,0.4);
+    color: var(--power);
+  }
+  .stone-power.active { background: rgba(255,51,51,0.3); border-color: var(--power); box-shadow: 0 0 12px var(--power-glow); }
+  .stone-reality {
+    background: rgba(255,215,0,0.12);
+    border-color: rgba(255,215,0,0.4);
+    color: var(--reality);
+  }
+  .stone-reality.active { background: rgba(255,215,0,0.3); border-color: var(--reality); box-shadow: 0 0 12px var(--reality-glow); }
+  .stone-space {
+    background: rgba(79,195,247,0.12);
+    border-color: rgba(79,195,247,0.4);
+    color: var(--space);
+  }
+  .stone-space.active { background: rgba(79,195,247,0.3); border-color: var(--space); box-shadow: 0 0 12px var(--space-glow); }
+  .stone-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .stone-btn.used-this-q { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── RESULT SCREEN ── */
+  .result-icon {
+    font-size: 80px; text-align: center; margin-bottom: 16px;
+    animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes bounceIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .result-score {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(40px, 12vw, 70px);
+    font-weight: 700;
+    text-align: center;
+    color: var(--gold);
+    filter: drop-shadow(0 0 20px rgba(201,168,76,0.5));
+    animation: scoreCount 0.5s ease-out;
+  }
+  @keyframes scoreCount { from { transform: scale(1.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .result-label { text-align: center; font-size: 12px; letter-spacing: 4px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 16px; }
+  .result-answer-reveal {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px;
+    margin-bottom: 16px;
+  }
+  .result-answer-label { font-size: 11px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+  .result-answer-text { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; }
+  .result-answer-text.correct-ans { color: var(--correct); }
+  .result-total { text-align: center; font-family: 'Rajdhani', sans-serif; font-size: 16px; color: var(--text-dim); }
+  .result-total span { color: var(--gold); font-size: 22px; font-weight: 700; }
+
+  /* ── LEADERBOARD ── */
+  .lb-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(16px, 4vw, 22px); font-weight: 700;
+    color: var(--gold); text-align: center; margin-bottom: 20px;
+    filter: drop-shadow(0 0 15px rgba(201,168,76,0.4));
+  }
+  .lb-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+    position: relative; overflow: hidden;
+    animation: slideIn 0.4s ease-out both;
+  }
+  .lb-row:nth-child(1) { animation-delay: 0.05s; }
+  .lb-row:nth-child(2) { animation-delay: 0.1s; }
+  .lb-row:nth-child(3) { animation-delay: 0.15s; }
+  .lb-row:nth-child(n+4) { animation-delay: 0.2s; }
+  @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .lb-row.my-team {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.08);
+  }
+  .lb-row.my-team::before {
+    content: ''; position: absolute; left:0; top:0; bottom:0; width:3px;
+    background: var(--gold);
+  }
+  .lb-rank {
+    font-family: 'Cinzel Decorative', serif; font-size: 20px; font-weight: 700;
+    width: 36px; text-align: center;
+    color: var(--text-dim);
+  }
+  .lb-rank.gold { color: #ffd700; filter: drop-shadow(0 0 8px rgba(255,215,0,0.6)); }
+  .lb-rank.silver { color: #c0c0c0; }
+  .lb-rank.bronze { color: #cd7f32; }
+  .lb-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
+  .lb-name { flex: 1; font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; }
+  .lb-score { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; color: var(--gold); }
+  .lb-time { font-size: 11px; color: var(--text-dim); text-align: right; }
+
+  /* ── STONE SELECTION ── */
+  .stone-select-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(14px, 3.5vw, 18px);
+    color: var(--gold); text-align: center; margin-bottom: 6px;
+  }
+  .stone-select-sub { font-size: 13px; color: var(--text-dim); text-align: center; margin-bottom: 20px; letter-spacing: 1px; }
+  .stone-choice {
+    border-radius: 12px; padding: 20px;
+    text-align: center; cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+    margin-bottom: 12px;
+  }
+  .stone-choice:hover { transform: scale(1.03); }
+  .stone-choice-power { background: rgba(255,51,51,0.1); border-color: rgba(255,51,51,0.4); }
+  .stone-choice-power:hover { border-color: var(--power); box-shadow: 0 0 20px var(--power-glow); }
+  .stone-choice-reality { background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.4); }
+  .stone-choice-reality:hover { border-color: var(--reality); box-shadow: 0 0 20px var(--reality-glow); }
+  .stone-choice-space { background: rgba(79,195,247,0.1); border-color: rgba(79,195,247,0.4); }
+  .stone-choice-space:hover { border-color: var(--space); box-shadow: 0 0 20px var(--space-glow); }
+  .stone-choice-icon img { width: 56px; height: 56px; object-fit: contain; margin-bottom: 8px; }
+  .stone-choice-name {
+    font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .stone-choice-desc { font-size: 13px; color: var(--text-dim); line-height: 1.4; }
+  .stone-choice-power .stone-choice-name { color: var(--power); }
+  .stone-choice-reality .stone-choice-name { color: var(--reality); }
+  .stone-choice-space .stone-choice-name { color: var(--space); }
+  .stone-choice.selected { transform: scale(1.03); }
+  .stone-choice-power.selected { border-color: var(--power); box-shadow: 0 0 25px var(--power-glow); }
+  .stone-choice-reality.selected { border-color: var(--reality); box-shadow: 0 0 25px var(--reality-glow); }
+  .stone-choice-space.selected { border-color: var(--space); box-shadow: 0 0 25px var(--space-glow); }
+  .watching-msg { text-align: center; color: var(--text-dim); font-size: 14px; margin-top: 20px; letter-spacing: 1px; }
+
+  /* ── GAME ENDED ── */
+  .winner-trophy { font-size: 80px; text-align: center; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-12px); } }
+  .winner-name {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(18px, 5vw, 28px);
+    color: var(--gold); text-align: center; margin: 10px 0 4px;
+    filter: drop-shadow(0 0 20px rgba(201,168,76,0.5));
+  }
+  .winner-sub { text-align: center; color: var(--text-dim); font-size: 13px; letter-spacing: 3px; margin-bottom: 24px; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 130px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 20px; font-size: 14px; color: var(--text);
+    z-index: 200; opacity: 0; transition: all 0.3s; pointer-events: none;
+    white-space: nowrap; max-width: 90vw;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.error { border-color: var(--wrong); color: var(--wrong); }
+  #toast.success { border-color: var(--correct); color: var(--correct); }
+  #toast.gold { border-color: var(--gold); color: var(--gold); }
+
+  /* ── ERROR ── */
+  .error-text { color: var(--wrong); font-size: 13px; margin-top: 8px; text-align: center; min-height: 18px; }
+
+  /* ── SPACE STONE EFFECT ── */
+  .space-stone-active {
+    border: 1px solid var(--space) !important;
+    box-shadow: 0 0 20px var(--space-glow);
+    position: relative;
+  }
+  .space-stone-active::after {
+    content: '🔵 BACKUP QUESTION';
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    background: var(--bg); color: var(--space);
+    font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    padding: 2px 8px; border-radius: 4px; border: 1px solid var(--space);
+    white-space: nowrap;
+  }
+
+  /* ── SCROLL ── */
+  .scroll-view { overflow-y: auto; max-height: calc(100vh - 200px); }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── CONNECTION STATUS ── */
+  .conn-status {
+    position: fixed; top: 10px; right: 10px; z-index: 999;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--correct);
+    transition: background 0.3s;
+  }
+  .conn-status.offline { background: var(--wrong); animation: pulse 1s infinite; }
+
+  /* ── PHASE END WAITING ── */
+  .phase-end-wait {
+    text-align: center; padding: 20px 0;
+  }
+  .phase-end-wait .big-num {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(30px, 10vw, 60px);
+    color: var(--gold);
+    filter: drop-shadow(0 0 20px rgba(201,168,76,0.4));
+    margin: 10px 0;
+  }
+  .phase-end-wait .sub { color: var(--text-dim); font-size: 13px; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<div id="stars"></div>
+<div class="conn-status" id="connStatus"></div>
+<div id="toast"></div>
+
+<!-- ========= JOIN SCREEN ========= -->
+<div class="screen active" id="screen-join">
+  <div class="screen-inner">
+    <div class="logo">AVENGERS</div>
+    <div class="logo-sub">Infinity Quiz</div>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">Room Code</label>
+        <input class="form-input upper" id="inp-code" type="text" maxlength="6" placeholder="ENTER CODE" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Team Name</label>
+        <input class="form-input" id="inp-team" type="text" maxlength="24" placeholder="Your team name" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Choose Your Avatar</label>
+        <div class="avatar-grid" id="avatarGrid"></div>
+      </div>
+      <div class="error-text" id="joinError"></div>
+      <button class="btn" id="btnJoin" onclick="joinGame()">ASSEMBLE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========= WAITING ROOM ========= -->
+<div class="screen" id="screen-waiting">
+  <div class="screen-inner">
+    <div class="logo">AVENGERS</div>
+    <div class="logo-sub">Infinity Quiz</div>
+    <div class="card">
+      <div class="waiting-header">YOU'RE IN</div>
+      <div class="team-display">
+        <img class="team-avatar-big" id="wt-avatar" alt="Team avatar">
+        <div>
+          <div class="team-info-name" id="wt-name">Team Name</div>
+          <div class="team-info-sub">READY FOR BATTLE</div>
+        </div>
+        <div class="pulse-dot"></div>
+      </div>
+      <p class="waiting-msg">Waiting for the admin to start the game...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========= PHASE BANNER ========= -->
+<div class="screen" id="screen-phase" style="background:radial-gradient(ellipse at center, rgba(201,168,76,0.15) 0%, transparent 70%)">
+  <div class="screen-inner" style="text-align:center">
+    <div class="phase-label">PHASE</div>
+    <div class="phase-number" id="phaseNum">1</div>
+    <div class="phase-label" style="margin-top:4px;letter-spacing:4px" id="phaseOf">OF 5</div>
+  </div>
+</div>
+
+<!-- ========= QUESTION SCREEN ========= -->
+<div class="screen" id="screen-question">
+  <div class="hud">
+    <img class="hud-avatar" id="q-hud-avatar" alt="Team avatar">
+    <div>
+      <div class="hud-team" id="q-hud-team">Team</div>
+      <div class="hud-phase-q" id="q-hud-info">Phase 1 · Q1</div>
+    </div>
+    <div>
+      <div class="hud-score" id="q-hud-score">0</div>
+      <div class="hud-phase-q">pts</div>
+    </div>
+  </div>
+
+  <div class="screen-inner" style="width:100%;max-width:560px">
+    <div class="timer-ring-container">
+      <div class="timer-ring">
+        <svg viewBox="0 0 80 80" width="80" height="80">
+          <circle class="timer-ring-bg" cx="40" cy="40" r="35"/>
+          <circle class="timer-ring-fg" id="timerArc" cx="40" cy="40" r="35"/>
+        </svg>
+        <div class="timer-value" id="timerVal">30</div>
+      </div>
+    </div>
+
+    <div class="question-phase-info" id="q-phase-info">PHASE 1 · QUESTION 1/5</div>
+    <div class="question-text" id="q-text" id="q-card">Question text here...</div>
+    <div class="question-media" id="q-media">
+      <img id="q-image" alt="Question media">
+    </div>
+    <div class="question-link" id="q-link-wrap">
+      <a class="btn btn-secondary" id="q-link" target="_blank" rel="noopener noreferrer">OPEN REFERENCE LINK</a>
+    </div>
+    <div class="options-grid" id="optionsGrid">
+      <button class="option-btn" data-i="0" onclick="selectAnswer(0)"></button>
+      <button class="option-btn" data-i="1" onclick="selectAnswer(1)"></button>
+      <button class="option-btn" data-i="2" onclick="selectAnswer(2)"></button>
+      <button class="option-btn" data-i="3" onclick="selectAnswer(3)"></button>
+    </div>
+    <div id="q-backup-label" style="display:none; text-align:center; color:var(--space); font-size:12px; letter-spacing:2px; margin-bottom:6px;">🔵 SPACE STONE — BACKUP QUESTION ACTIVE</div>
+    <div id="q-power-label" style="display:none; text-align:center; color:var(--power); font-size:12px; letter-spacing:2px;">🔴 POWER STONE — 2× SCORE ACTIVE</div>
+  </div>
+
+  <div class="stones-bar">
+    <div class="stones-label">Power Stones</div>
+    <div class="stones-row">
+      <button class="stone-btn stone-power" id="stone-power" onclick="useStone('power')">
+        <span class="s-icon"><img id="icon-power" alt="Power stone"></span>
+        <div>
+          <div>POWER</div>
+          <div class="s-count" id="cnt-power">0</div>
+        </div>
+      </button>
+      <button class="stone-btn stone-reality" id="stone-reality" onclick="useStone('reality')">
+        <span class="s-icon"><img id="icon-reality" alt="Reality stone"></span>
+        <div>
+          <div>REALITY</div>
+          <div class="s-count" id="cnt-reality">0</div>
+        </div>
+      </button>
+      <button class="stone-btn stone-space" id="stone-space" onclick="useStone('space')">
+        <span class="s-icon"><img id="icon-space" alt="Space stone"></span>
+        <div>
+          <div>SPACE</div>
+          <div class="s-count" id="cnt-space">0</div>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========= RESULT SCREEN ========= -->
+<div class="screen" id="screen-result">
+  <div class="screen-inner" style="text-align:center">
+    <div class="result-icon" id="r-icon">✅</div>
+    <div class="result-score" id="r-score">+75</div>
+    <div class="result-label">POINTS EARNED</div>
+    <div class="result-answer-reveal" id="r-answer-box">
+      <div class="result-answer-label">Correct Answer</div>
+      <div class="result-answer-text correct-ans" id="r-correct-text">Answer text</div>
+    </div>
+    <div class="result-total">Total Score: <span id="r-total">0</span></div>
+    <p style="color:var(--text-dim);font-size:13px;margin-top:16px;letter-spacing:1px;animation:blink 2s infinite">Waiting for next question...</p>
+  </div>
+</div>
+
+<!-- ========= LEADERBOARD SCREEN ========= -->
+<div class="screen" id="screen-leaderboard">
+  <div class="screen-inner">
+    <div class="lb-title" id="lb-title">⚡ PHASE 1 COMPLETE</div>
+    <div id="lb-list" class="scroll-view"></div>
+    <p style="text-align:center;color:var(--text-dim);font-size:12px;margin-top:16px;letter-spacing:2px;animation:blink 2s infinite" id="lb-wait">Waiting for admin...</p>
+  </div>
+</div>
+
+<!-- ========= STONE SELECTION SCREEN ========= -->
+<div class="screen" id="screen-stone-select">
+  <div class="screen-inner">
+    <div class="stone-select-title">🏆 TOP 3 — CHOOSE YOUR STONE</div>
+    <div class="stone-select-sub" id="ss-sub">Select a Power Stone to add to your arsenal</div>
+    <div id="ss-choices" style="display:none">
+      <div class="stone-choice stone-choice-power" onclick="pickStone('power')">
+        <div class="stone-choice-icon"><img id="choice-power" alt="Power stone"></div>
+        <div class="stone-choice-name">POWER STONE</div>
+        <div class="stone-choice-desc">Doubles your score if activated within the first 10 seconds of any question</div>
+      </div>
+      <div class="stone-choice stone-choice-reality" onclick="pickStone('reality')">
+        <div class="stone-choice-icon"><img id="choice-reality" alt="Reality stone"></div>
+        <div class="stone-choice-name">REALITY STONE</div>
+        <div class="stone-choice-desc">Instantly eliminates 2 wrong answer options from the current question</div>
+      </div>
+      <div class="stone-choice stone-choice-space" onclick="pickStone('space')">
+        <div class="stone-choice-icon"><img id="choice-space" alt="Space stone"></div>
+        <div class="stone-choice-name">SPACE STONE</div>
+        <div class="stone-choice-desc">Replaces your current question with a backup question from the reserve pool</div>
+      </div>
+    </div>
+    <div class="watching-msg" id="ss-watch" style="display:none">
+      🏆 Top 3 teams are selecting their Power Stones...<br>
+      <small style="opacity:0.6">Stand by</small>
+    </div>
+    <button class="btn" id="ss-confirm" onclick="confirmStone()" style="display:none;margin-top:16px">CLAIM THIS STONE</button>
+  </div>
+</div>
+
+<!-- ========= GAME ENDED ========= -->
+<div class="screen" id="screen-ended">
+  <div class="screen-inner" style="text-align:center">
+    <div class="winner-trophy" id="end-trophy">🏆</div>
+    <div class="winner-name" id="end-winner">AVENGERS WIN!</div>
+    <div class="winner-sub">THE INFINITY QUIZ IS COMPLETE</div>
+    <div id="end-lb" class="scroll-view"></div>
+  </div>
+</div>
+
+<script>
+// =================== STATE ===================
+const socket = io();
+let state = {
+  teamName: '', avatar: '', roomCode: '',
+  totalScore: 0, phaseScores: [],
+  stones: { power:0, reality:0, space:0 },
+  currentPhase: 0,
+  totalQuestions: 5,
+  gameState: 'WAITING_ROOM',
+  lockedAnswer: null,
+  stonesUsedThisQ: [],
+  activeStonesThisQ: {},
+  timerTotal: 30, timerRemaining: 30,
+  pendingStoneChoice: null,
+  eligibleForStone: false,
+  lastQuestion: null,
+};
+
+const DEFAULT_AVATAR = 'https://placehold.co/96x96?text=TEAM';
+const AVATARS = [
+  'https://ik.imagekit.io/rsqu64arg/icons/hulk.jpeg?updatedAt=1771481306706',
+  'https://ik.imagekit.io/rsqu64arg/icons/thor.jpeg?updatedAt=1771481306677',
+  'https://ik.imagekit.io/rsqu64arg/icons/black%20panther.jpeg?updatedAt=1771481306681',
+  'https://ik.imagekit.io/rsqu64arg/icons/ironman.jpeg?updatedAt=1771481306668',
+  'https://ik.imagekit.io/rsqu64arg/icons/Black%20Widow.jpg?updatedAt=1771481306646',
+  'https://ik.imagekit.io/rsqu64arg/icons/download%20(1).jpg?updatedAt=1771481306588',
+  'https://ik.imagekit.io/rsqu64arg/icons/download%20(3).jpg?updatedAt=1771481306552',
+  'https://ik.imagekit.io/rsqu64arg/icons/download%20(4).jpg?updatedAt=1771481306548',
+  'https://ik.imagekit.io/rsqu64arg/icons/ant.jpeg?updatedAt=1771481306535',
+  'https://ik.imagekit.io/rsqu64arg/icons/download%20(2).jpg?updatedAt=1771481306519',
+];
+const STONE_IMAGES = {
+  power: 'https://ik.imagekit.io/3ku7rvecvz/power.jpeg',
+  reality: 'https://ik.imagekit.io/3ku7rvecvz/reality.jpg',
+  space: 'https://ik.imagekit.io/3ku7rvecvz/space.jpg',
+};
+
+// =================== INIT ===================
+window.addEventListener('load', () => {
+  renderAvatarGrid();
+  setStoneImages();
+  const saved = JSON.parse(localStorage.getItem('avq_state') || '{}');
+  if (saved.teamName) document.getElementById('inp-team').value = saved.teamName;
+  if (saved.roomCode) document.getElementById('inp-code').value = saved.roomCode;
+  if (saved.avatar) {
+    state.avatar = saved.avatar;
+    document.querySelectorAll('.avatar-opt').forEach(el => {
+      if (el.dataset.avatar === saved.avatar) el.classList.add('selected');
+    });
+  }
+  if (saved.teamName && saved.roomCode && saved.avatar) {
+    joinGame(true);
+  }
+});
+
+function renderAvatarGrid() {
+  const grid = document.getElementById('avatarGrid');
+  grid.innerHTML = AVATARS.map(url =>
+    `<div class="avatar-opt" data-avatar="${url}" onclick="selectAvatar(this,'${url}')">
+      <img src="${url}" alt="Avatar">
+    </div>`
+  ).join('');
+}
+
+function selectAvatar(el, avatarUrl) {
+  document.querySelectorAll('.avatar-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  state.avatar = avatarUrl;
+}
+
+function setAvatarImage(el, url) {
+  if (!el) return;
+  el.src = url || DEFAULT_AVATAR;
+}
+
+function setStoneImages() {
+  const ids = ['power','reality','space'];
+  ids.forEach(type => {
+    const icon = document.getElementById(`icon-${type}`);
+    const choice = document.getElementById(`choice-${type}`);
+    if (icon) icon.src = STONE_IMAGES[type];
+    if (choice) choice.src = STONE_IMAGES[type];
+  });
+}
+
+// =================== JOIN ===================
+function joinGame(auto = false) {
+  const code = document.getElementById('inp-code').value.trim().toUpperCase();
+  const team = document.getElementById('inp-team').value.trim();
+  const avatar = state.avatar || document.querySelector('.avatar-opt.selected')?.dataset.avatar || DEFAULT_AVATAR;
+  const errEl = document.getElementById('joinError');
+
+  if (!code || code.length < 4) { errEl.textContent = 'Enter a valid room code'; return; }
+  if (!team || team.length < 1) { errEl.textContent = 'Enter your team name'; return; }
+  errEl.textContent = '';
+  document.getElementById('btnJoin').disabled = true;
+  document.getElementById('btnJoin').textContent = auto ? 'RECONNECTING...' : 'CONNECTING...';
+
+  socket.emit('player:join', { roomCode: code, teamName: team, avatar }, (res) => {
+    document.getElementById('btnJoin').disabled = false;
+    document.getElementById('btnJoin').textContent = 'ASSEMBLE';
+    if (res.error) { errEl.textContent = res.error; return; }
+
+    state.teamName = team; state.avatar = avatar; state.roomCode = code;
+    state.totalScore = res.totalScore || 0;
+    state.phaseScores = res.phaseScores || [];
+    state.stones = res.stones || { power:0, reality:0, space:0 };
+    state.currentPhase = res.currentPhase || 0;
+    state.gameState = res.gameState;
+
+    localStorage.setItem('avq_state', JSON.stringify({ teamName: team, avatar, roomCode: code }));
+    updateHUD();
+
+    if (res.gameState === 'QUESTION_ACTIVE' && res.currentQuestion) {
+      showScreen('screen-question');
+      renderQuestion(res.currentQuestion, res.currentQuestion.timerRemaining);
+    } else if (res.gameState === 'STONE_SELECTION') {
+      if (res.stoneSelection) handleStoneSelection(res.stoneSelection);
+      showScreen('screen-stone-select');
+    } else if (res.gameState === 'LEADERBOARD' && res.leaderboard) {
+      document.getElementById('lb-title').textContent = `⚡ LEADERBOARD`;
+      renderLeaderboard(res.leaderboard, 'lb-list');
+      showScreen('screen-leaderboard');
+    } else if (res.gameState === 'GAME_ENDED' && res.leaderboard) {
+      const winner = res.leaderboard[0];
+      document.getElementById('end-winner').textContent = winner ? `${winner.name} WINS!` : 'GAME OVER!';
+      renderLeaderboard(res.leaderboard, 'end-lb');
+      showScreen('screen-ended');
+    } else if (res.gameState === 'WAITING_ROOM') {
+      setAvatarImage(document.getElementById('wt-avatar'), avatar);
+      document.getElementById('wt-name').textContent = team;
+      showScreen('screen-waiting');
+    } else {
+      setAvatarImage(document.getElementById('wt-avatar'), avatar);
+      document.getElementById('wt-name').textContent = team;
+      showScreen('screen-waiting');
+    }
+  });
+}
+
+// =================== SCREENS ===================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const s = document.getElementById(id);
+  if (s) s.classList.add('active');
+}
+
+// =================== HUD ===================
+function updateHUD() {
+  setAvatarImage(document.getElementById('q-hud-avatar'), state.avatar);
+  document.getElementById('q-hud-team').textContent = state.teamName;
+  document.getElementById('q-hud-score').textContent = state.totalScore;
+  updateStoneUI();
+}
+
+function updateStoneUI() {
+  ['power','reality','space'].forEach(type => {
+    const cnt = document.getElementById(`cnt-${type}`);
+    const btn = document.getElementById(`stone-${type}`);
+    if (cnt) cnt.textContent = state.stones[type] || 0;
+    if (btn) {
+      const noStones = (state.stones[type] || 0) <= 0;
+      const usedThisQ = state.stonesUsedThisQ.includes(type);
+      btn.disabled = noStones || usedThisQ || state.lockedAnswer !== null || state.currentPhase < 2;
+      btn.classList.toggle('used-this-q', usedThisQ);
+      if (type === 'power') btn.classList.toggle('active', !!state.activeStonesThisQ.power);
+    }
+  });
+}
+
+// =================== QUESTION ===================
+let timerInterval = null;
+
+function renderQuestion(q, timerOverride) {
+  state.lockedAnswer = q.lockedAnswer !== undefined ? q.lockedAnswer : null;
+  state.lockedTextAnswer = q.lockedTextAnswer !== undefined ? q.lockedTextAnswer : null;
+  state.stonesUsedThisQ = [];
+  state.activeStonesThisQ = {};
+  state.timerTotal = q.timer;
+  state.lastQuestion = q;
+  state.totalQuestions = q.totalQuestions || state.totalQuestions || 5;
+  const remaining = timerOverride !== undefined ? timerOverride : q.timer;
+  state.timerRemaining = remaining;
+
+  // HUD info
+  document.getElementById('q-hud-info').textContent = `Phase ${q.phaseNum} · Q${q.questionNum}`;
+  document.getElementById('q-phase-info').textContent = `PHASE ${q.phaseNum} · QUESTION ${q.questionNum}/${state.totalQuestions}`;
+  document.getElementById('q-text').textContent = q.text;
+
+  const mediaWrap = document.getElementById('q-media');
+  const mediaImg = document.getElementById('q-image');
+  if (q.image) {
+    mediaImg.src = q.image;
+    mediaWrap.style.display = 'flex';
+  } else {
+    mediaImg.src = '';
+    mediaWrap.style.display = 'none';
+  }
+
+  const linkWrap = document.getElementById('q-link-wrap');
+  const linkBtn = document.getElementById('q-link');
+  if (q.externalUrl) {
+    linkBtn.href = q.externalUrl;
+    linkWrap.style.display = 'flex';
+  } else {
+    linkBtn.removeAttribute('href');
+    linkWrap.style.display = 'none';
+  }
+
+  // Space stone flag
+  const backup = q.isBackup || q.isSpaceStone;
+  const backupLabel = document.getElementById('q-backup-label');
+  backupLabel.style.display = backup ? 'block' : 'none';
+  const qCard = document.getElementById('q-text').parentElement;
+
+  // Check if text answer question
+  const isTextAnswer = q.textAnswer;
+  const grid = document.getElementById('optionsGrid');
+  const textAnswerWrap = document.getElementById('text-answer-wrap');
+
+  if (isTextAnswer) {
+    // Hide multiple-choice options
+    grid.style.display = 'none';
+    
+    // Show text input
+    if (!textAnswerWrap) {
+      const wrapper = document.createElement('div');
+      wrapper.id = 'text-answer-wrap';
+      wrapper.style.cssText = 'display:flex;flex-direction:column;gap:12px;margin-top:20px;max-width:500px;margin-left:auto;margin-right:auto';
+      wrapper.innerHTML = `
+        <input type="text" id="text-answer-input" placeholder="Enter your answer..." style="padding:12px;background:var(--surface3);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:16px;font-family:inherit">
+        <button id="text-answer-btn" class="btn" style="width:100%">SUBMIT ANSWER</button>
+      `;
+      grid.parentElement.appendChild(wrapper);
+    } else {
+      textAnswerWrap.style.display = 'flex';
+    }
+    
+    // Set up event listeners
+    const inputEl = document.getElementById('text-answer-input');
+    const btnEl = document.getElementById('text-answer-btn');
+    inputEl.disabled = state.lockedTextAnswer !== null;
+    btnEl.disabled = state.lockedTextAnswer !== null;
+    if (state.lockedTextAnswer) inputEl.value = state.lockedTextAnswer;
+    
+    inputEl.oninput = null;
+    btnEl.onclick = () => submitTextAnswer();
+  } else {
+    // Show multiple-choice options
+    grid.style.display = 'grid';
+    if (textAnswerWrap) textAnswerWrap.style.display = 'none';
+    
+    const opts = grid.querySelectorAll('.option-btn');
+    const badges = ['A','B','C','D'];
+    opts.forEach((btn, i) => {
+      btn.textContent = '';
+      btn.className = 'option-btn';
+      btn.disabled = false;
+      const badge = document.createElement('span');
+      badge.className = 'option-badge'; badge.textContent = badges[i];
+      btn.appendChild(badge);
+      btn.appendChild(document.createTextNode(q.options[i]));
+
+      // Removed options (Reality Stone)
+      if (q.removedOptions && q.removedOptions.includes(i)) {
+        btn.classList.add('removed'); btn.disabled = true;
+      }
+      // Locked answer
+      if (state.lockedAnswer !== null) {
+        btn.disabled = true;
+        if (i === state.lockedAnswer) btn.classList.add('selected');
+      }
+    });
+  }
+
+  // Timer
+  startTimerDisplay(state.timerTotal, remaining);
+  updateHUD();
+  showScreen('screen-question');
+}
+
+function startTimerDisplay(total, remaining) {
+  clearInterval(timerInterval);
+  updateTimerDisplay(remaining, total);
+  timerInterval = setInterval(() => {
+    if (state.timerRemaining > 0) {
+      state.timerRemaining--;
+      updateTimerDisplay(state.timerRemaining, total);
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay(remaining, total) {
+  const val = document.getElementById('timerVal');
+  const arc = document.getElementById('timerArc');
+  val.textContent = remaining;
+  const circumference = 2 * Math.PI * 35;
+  const offset = circumference * (1 - remaining / total);
+  arc.style.strokeDashoffset = offset;
+
+  const ratio = remaining / total;
+  arc.className = 'timer-ring-fg';
+  if (ratio <= 0.25) { arc.classList.add('critical'); val.style.color = 'var(--power)'; }
+  else if (ratio <= 0.5) { arc.classList.add('warn'); val.style.color = 'var(--timer-warn)'; }
+  else { val.style.color = 'var(--gold)'; }
+}
+
+function selectAnswer(idx) {
+  if (state.lockedAnswer !== null) return;
+  const opts = document.querySelectorAll('.option-btn');
+  if (opts[idx].classList.contains('removed') || opts[idx].disabled) return;
+
+  socket.emit('player:submitAnswer', { answer: idx }, (res) => {
+    if (res.error) { showToast(res.error, 'error'); return; }
+    state.lockedAnswer = idx;
+    opts.forEach(btn => { btn.disabled = true; });
+    opts[idx].classList.add('selected');
+    updateStoneUI();
+    showToast('Answer locked!', 'success');
+  });
+}
+
+function submitTextAnswer() {
+  if (state.lockedTextAnswer !== null) return;
+  const inputEl = document.getElementById('text-answer-input');
+  const answerText = inputEl.value.trim();
+  
+  if (!answerText) {
+    showToast('Please enter an answer', 'error');
+    return;
+  }
+  
+  socket.emit('player:submitAnswer', { answerText }, (res) => {
+    if (res.error) { showToast(res.error, 'error'); return; }
+    state.lockedTextAnswer = answerText;
+    inputEl.disabled = true;
+    document.getElementById('text-answer-btn').disabled = true;
+    updateStoneUI();
+    showToast('Answer submitted!', 'success');
+  });
+}
+
+function useStone(type) {
+  if (state.currentPhase < 2) { showToast('Stones unlock from Phase 2!', 'error'); return; }
+  if ((state.stones[type] || 0) <= 0) { showToast('No ' + type + ' stone!', 'error'); return; }
+  if (state.stonesUsedThisQ.includes(type)) { showToast('Already used ' + type + ' stone this question!', 'error'); return; }
+  if (type === 'power' && state.lockedAnswer !== null) { showToast('Cannot activate after answering!', 'error'); return; }
+
+  socket.emit('player:useStone', { stoneType: type }, (res) => {
+    if (res.error) { showToast(res.error, 'error'); return; }
+    state.stonesUsedThisQ.push(type);
+    if (type === 'power') {
+      state.activeStonesThisQ.power = true;
+      document.getElementById('q-power-label').style.display = 'block';
+      showToast('🔴 Power Stone activated! 2× score ready!', 'gold');
+    } else if (type === 'reality') {
+      if (res.removedOptions) {
+        const opts = document.querySelectorAll('.option-btn');
+        res.removedOptions.forEach(i => {
+          opts[i].classList.add('removed'); opts[i].disabled = true;
+        });
+      }
+      showToast('🟡 Reality Stone! 2 wrong options eliminated!', 'gold');
+    } else if (type === 'space') {
+      showToast('🔵 Space Stone! New question incoming!', 'gold');
+    }
+    updateStoneUI();
+  });
+}
+
+// =================== STONE PICK ===================
+function pickStone(type) {
+  if (!state.eligibleForStone) return;
+  showToast('Stone selection is handled by the admin.', 'error');
+}
+
+function confirmStone() {
+  if (!state.pendingStoneChoice) return;
+  socket.emit('player:selectStone', { stoneType: state.pendingStoneChoice }, (res) => {
+    if (res.error) { showToast(res.error, 'error'); return; }
+    state.stones = res.stones;
+    showToast(`🏆 ${state.pendingStoneChoice.toUpperCase()} STONE claimed!`, 'gold');
+    document.getElementById('ss-choices').style.display = 'none';
+    document.getElementById('ss-confirm').style.display = 'none';
+    document.getElementById('ss-sub').textContent = `✅ ${state.pendingStoneChoice.toUpperCase()} STONE added to your arsenal!`;
+    state.eligibleForStone = false;
+    state.pendingStoneChoice = null;
+    updateStoneUI();
+  });
+}
+
+// =================== LEADERBOARD ===================
+function renderLeaderboard(lb, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = lb.map((t, i) => {
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}`;
+    const isMe = t.name === state.teamName;
+    const mins = Math.floor(t.totalResponseTime / 60);
+    const secs = t.totalResponseTime % 60;
+    const timeStr = `${mins}:${String(secs).padStart(2,'0')}`;
+    return `<div class="lb-row ${isMe ? 'my-team' : ''}">
+      <div class="lb-rank ${rankClass}">${rankEmoji}</div>
+      <img class="lb-avatar" src="${t.avatar || DEFAULT_AVATAR}" alt="Avatar">
+      <div style="flex:1">
+        <div class="lb-name">${t.name}${isMe ? ' <span style="color:var(--gold);font-size:11px;">(you)</span>' : ''}</div>
+        <div style="font-size:11px;color:var(--text-dim);">⏱ ${timeStr}</div>
+      </div>
+      <div class="lb-score">${t.totalScore}</div>
+    </div>`;
+  }).join('');
+}
+
+// =================== TOAST ===================
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 3000);
+}
+
+// =================== SOCKET EVENTS ===================
+socket.on('connect', () => {
+  document.getElementById('connStatus').classList.remove('offline');
+});
+socket.on('disconnect', () => {
+  document.getElementById('connStatus').classList.add('offline');
+  showToast('Connection lost. Reconnecting...', 'error');
+});
+
+socket.on('phaseStarted', (data) => {
+  state.currentPhase = data.phase;
+  state.totalQuestions = data.totalQuestions || state.totalQuestions || 5;
+  state.stonesUsedThisQ = [];
+  state.activeStonesThisQ = {};
+  document.getElementById('phaseNum').textContent = data.phase;
+  document.getElementById('phaseOf').textContent = `OF ${data.totalPhases}`;
+  showScreen('screen-phase');
+  clearInterval(timerInterval);
+});
+
+socket.on('question', (q) => {
+  clearInterval(timerInterval);
+  state.currentPhase = q.phaseNum;
+  state.stonesUsedThisQ = [];
+  state.activeStonesThisQ = {};
+  document.getElementById('q-power-label').style.display = 'none';
+  renderQuestion(q, q.timerRemaining);
+});
+
+socket.on('timerTick', (data) => {
+  state.timerRemaining = data.remaining;
+  updateTimerDisplay(data.remaining, data.total);
+});
+
+socket.on('questionResult', (data) => {
+  clearInterval(timerInterval);
+  state.totalScore = data.totalScore;
+  state.lockedAnswer = null;
+  state.lockedTextAnswer = null;
+
+  const icon = data.isCorrect ? '✅' : '❌';
+  document.getElementById('r-icon').textContent = data.score > 0 ? (data.score >= 150 ? '💎' : '✅') : (data.yourAnswer !== null ? '❌' : '⏰');
+  document.getElementById('r-score').textContent = `+${data.score}`;
+  document.getElementById('r-score').style.color = data.isCorrect ? 'var(--gold)' : 'var(--wrong)';
+
+  // Build options display for correct answer reveal
+  const last = state.lastQuestion;
+  
+  if (data.isTextAnswer) {
+    // Text answer display
+    document.getElementById('r-correct-text').innerHTML = `
+      <div style="margin-bottom:8px;font-size:14px;color:var(--text-dim)">Your Answer:</div>
+      <div style="padding:10px;background:var(--surface2);border-radius:4px;border-left:4px solid var(--gold);margin-bottom:12px;font-size:14px">${data.yourAnswer || '(No answer submitted)'}</div>
+      <div style="margin-bottom:8px;font-size:14px;color:var(--text-dim)">Correct Answer:</div>
+      <div style="padding:10px;background:rgba(76,175,80,0.1);border-radius:4px;border-left:4px solid var(--correct);font-size:14px">${data.correctAnswer}</div>
+    `;
+  } else {
+    const correctText = last && last.options ? last.options[data.correctAnswer] : null;
+    document.getElementById('r-correct-text').textContent = correctText
+      ? `Option ${['A','B','C','D'][data.correctAnswer]}: ${correctText}`
+      : `Option ${['A','B','C','D'][data.correctAnswer]}: was correct`;
+  }
+  
+  document.getElementById('r-total').textContent = data.totalScore;
+
+  showScreen('screen-result');
+  updateHUD();
+});
+
+socket.on('realityStoneEffect', (data) => {
+  const opts = document.querySelectorAll('.option-btn');
+  data.removedOptions.forEach(i => {
+    opts[i].classList.add('removed'); opts[i].disabled = true;
+  });
+});
+
+socket.on('stonesUpdated', (data) => {
+  if (data.stones) {
+    state.stones = data.stones;
+  } else if (data.teams && Array.isArray(data.teams)) {
+    const mine = data.teams.find(t => t.name === state.teamName);
+    if (mine && mine.stones) state.stones = mine.stones;
+  }
+  if (data.activeStones) state.activeStonesThisQ = data.activeStones;
+  updateStoneUI();
+});
+
+socket.on('phaseComplete', (data) => {
+  clearInterval(timerInterval);
+  state.currentPhase = data.phase;
+  document.getElementById('lb-title').textContent = `⚡ PHASE ${data.phase} COMPLETE`;
+  document.getElementById('lb-wait').textContent = 'Waiting for next phase...';
+  renderLeaderboard(data.leaderboard, 'lb-list');
+  showScreen('screen-leaderboard');
+});
+
+socket.on('showLeaderboard', (data) => {
+  document.getElementById('lb-title').textContent = `⚡ LEADERBOARD`;
+  renderLeaderboard(data.leaderboard, 'lb-list');
+  showScreen('screen-leaderboard');
+});
+
+function handleStoneSelection(data) {
+  state.eligibleForStone = false;
+  state.pendingStoneChoice = null;
+  const eligibleNames = data.eligible.map(e => e.name);
+
+  document.getElementById('ss-choices').style.display = 'none';
+  document.getElementById('ss-watch').style.display = 'block';
+  document.getElementById('ss-confirm').style.display = 'none';
+  document.querySelectorAll('.stone-choice').forEach(el => el.classList.remove('selected'));
+
+  document.getElementById('ss-sub').textContent = `Top 3 teams: ${eligibleNames.join(', ')} — Admin assigns stones.`;
+  showScreen('screen-stone-select');
+}
+
+socket.on('stoneSelection', (data) => {
+  handleStoneSelection(data);
+});
+
+socket.on('yourTurnToSelectStone', () => {
+  showToast('Admin will assign stones shortly.', 'gold');
+});
+
+socket.on('stoneSelectionLocked', () => {
+  document.getElementById('ss-choices').style.display = 'none';
+  document.getElementById('ss-confirm').style.display = 'none';
+  document.getElementById('ss-watch').style.display = 'none';
+  document.getElementById('ss-sub').textContent = 'Stone selection complete. Get ready for the next phase!';
+  showToast('Stone selection complete!', 'gold');
+});
+
+socket.on('gameEnded', (data) => {
+  clearInterval(timerInterval);
+  const winner = data.leaderboard[0];
+  document.getElementById('end-trophy').textContent = '🏆';
+  document.getElementById('end-winner').textContent = winner ? `${winner.name} WINS!` : 'GAME OVER!';
+  renderLeaderboard(data.leaderboard, 'end-lb');
+  showScreen('screen-ended');
+});
+
+socket.on('kicked', () => {
+  showToast('You have been removed from the game.', 'error');
+  setTimeout(() => showScreen('screen-join'), 2000);
+});
+</script>
+</body>
+</html>

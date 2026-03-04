@@ -1,0 +1,405 @@
+{
+  "phases": [
+    [
+      {
+        "id": "p1q1",
+        "text": "Which element did Tony Stark synthesize to power his Arc Reactor in Iron Man 2?",
+        "options": [
+          "Palladium",
+          "Vibranium",
+          "Ars Nouveau (Ironium)",
+          "A new unnamed element"
+        ],
+        "correct": 3,
+        "timer": 25,
+        "image": ""
+      },
+      {
+        "id": "p1q2",
+        "text": "What is the name of the Norse realm where Frost Giants originate?",
+        "options": [
+          "Muspelheim",
+          "Niflheim",
+          "Jotunheim",
+          "Svartalfheim"
+        ],
+        "correct": 2,
+        "timer": 20,
+        "image": ""
+      },
+      {
+        "id": "p1q3",
+        "text": "In The Avengers (2012), what does SHIELD stand for?",
+        "options": [
+          "Strategic Homeland Intelligence Enforcement & Logistics Division",
+          "Strategic Homeland Intervention Enforcement & Logistics Division",
+          "Special High-Level Intelligence Enforcement & Logistics Division",
+          "Strategic Homeland Intelligence Enforcement & Law Division"
+        ],
+        "correct": 1,
+        "timer": 30,
+        "image": ""
+      },
+      {
+        "id": "p1q4",
+        "text": "What color is the Space Stone (Tesseract)?",
+        "options": [
+          "Green",
+          "Red",
+          "Yellow",
+          "Blue"
+        ],
+        "correct": 3,
+        "timer": 15,
+        "image": ""
+      },
+      {
+        "id": "p1q5",
+        "text": "What is Black Widow's real name?",
+        "options": [
+          "Yelena Belova",
+          "Nadia Van Dyne",
+          "Natasha Romanoff",
+          "Sasha Romanova"
+        ],
+        "correct": 2,
+        "timer": 20,
+        "image": ""
+      }
+    ],
+    [
+      {
+        "id": "p2q1",
+        "text": "Which planet is the Soul Stone located on in Avengers: Infinity War?",
+        "options": [
+          "Xandar",
+          "Titan",
+          "Knowhere",
+          "Vormir"
+        ],
+        "correct": 3,
+        "timer": 25,
+        "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxMSEhASEBMQFRUVEQ8WFRUXExgXEBcQFRIYFhURFhYYKCggGBooGxUVITQhJSkvLi4uGB8zODMuNygtLisBCgoKDg0OGRAQGy4lHiUrKy0xNzItLTU1Ny0tKzctLTUtLSsrLSsvKy01LS0tLTEtNy0rLTcrLSstLS4tNy0tLf/AABEIAKcBLgMBIgACEQEDEQH/xAAaAAEAAwEBAQAAAAAAAAAAAAAAAQMEBQIG/8QAPRAAAQMDAwEGAwUGBQUBAAAAAQACEQMSIQQxUUEFExQiYXEygZEGFSOhsUJSYnLB8BaC0eHxM0OSorIk/8QAGgEBAAMBAQEAAAAAAAAAAAAAAAECAwQFBv/EACoRAQEAAQIEBAUFAAAAAAAAAAABAhESAyFRYTFBsdEEBSKRwRQVUnHx/9oADAMBAAIRAxEAPwD5Hs7RtqfE4/C8kCARDXEOM7iQB8/ms+joB5Ic8MxMkSJkAD89/RZmFzsNaSeACT+S8VapEyMicHkdCrWyySRWY2W21u1uk7sjzscDdBaZwDGePqVqo9lB1p76mLmsOcQ5wBI9hO/IIjC+d8eeAnjjw1VWdXS0b3Wk24cZ9QJjMR7nZbanZBH/AHtOeYeTnO2MiBM+/QSvnfHngfmnjzw1B3q/ZloJ72iYBMXG4wJIiN/9uViY2TkgepmPykrnePPATx54H5oOi4RsQdsiY29VZpaQcSHPa3yuMmYJAkNx/fuYB5XjzwPzTx54H5oOiW5iR75j9J/Je3sAdAIIkZC5fjzwPzTx7uB+aDr2jgJaOAuV95O4CfeTuAg6to4CWjgLlfeTuAn3k7gIOraOAraFEE5iACTkDpgSdpMD5ri/eTuAn3k7gIPoKeha6619EAOgXugnbO22d/T5L2ezBaXGrp8ZgPlxEEkRG+AI9ei+c+8ncBPvJ3AQfQarRMaCW1GOIdAAAyP3sE/3PSCclo4C5X3k7gJ95O4CDq2jgJaOAuV95O4C9N7Qd6IOnaOAlo4CxVq9RglwAEkbg5G4wvVd9VgJcGYcGuioxzmvIcbXNaSWnyu3HQoN+lotc9jSWtDn0mlxiGtc6C6TgYyuj212U2kKDmuAbUDvjLXOBa1hMta0FuXOHXYTBlfMjXuzhpmN0GuP7rPoq6dm0z+mTdZ/v9tlTf5N/wDkK7QUGvdDiQIGxAPxtBOZwAS7/KuW7Wk9Ao8WeApk5M87LlbOr6CloGHUGl5y3EZF5loJyAR1P0VTdIDUptte26m9xYTDrhfa2SMTa3p1XE8WeAnizwFKru1tCG1KDXBzb3NDhcCQC+2QYxiVd2z2cylR0dRt4fWZWNRjiDaWOAaAIBEgndfOeLPAUjUmCYEAtB9yCQP/AFP0QbYxMj2zPvwvVJgMy6NuPrkj/VZqPeuaXNZIBInkgAlo/eIBBgZyFR4w8BBtaNvkvVZgBIDg4Yh0QDjg/wBfyWFupcdmzttPUgD8yB808WeAg6Ojo3sLcC4uBMAkZpkT1jDld9p9H3ZBvDy6m2SCCZsG5HXMHggrmNaSYAJPAElRqph10yARmZ9srSZYzGyzn1UuOW6WXk5qIizXEREBERAREQEREBERAREQEREBERAREQF7YV4VlNBr1uu720QBF37c/FGJOwx7ZWrWdp1H0yx/cRLSS2oJJBcS6wOtvJcSXBsnK5iKRFw5CXDkKUQRcOQlw5ClEEXDkJcOQpRBFw5CvZr3hjqYe4MJBIuMYDhETEG4zzAVKINOj1/dgwGkyCJJgEFrgS3YwWNPMjeMKijqSz4XRsfmNv1K8ogt0mtdSdewgOgicHB339MfNU3DkKUQdTTkAPLiQC23EF0yDMcY+cx7U6x4IxMBkSdzEmT9YjgBAwkEgGBEmMCdp4Vdb4XexUDnoiICIiAiIgIiICIiAiIgLyXheXv4VaC8FSs4KsbU5QWIoBUoCIiArKarVlNB2NOdJ4Z18+Itq2n8TD/N3bQB5C0/hySceb51dnDTWv78uuzbAdkQIDYwDN0l3DYG6wtZImR8QGfXr7f7LYOx6pMQP2f2gN/Q5n0QbBT0Nw89YAPEggw5ljZggT8V2YHXG05ms00OBe/D6sGDeWhw7uABbBbJMwbgB5QZGalonOIDbSS0u3AwHluS6OoVzuyak4sO+b2jYwdzypG6rQ0AJaKlYhpPmAy4A7AxHzge/PEqRJjaTHtOOP0V2o0T2C5wAF0fEDmCdh0gbrOgIiICIiAiIgIiIO52WAbg5wAJpiDGTd69IkGOYXv7T6AUiC17XXsB8uYNowfXOfWVzQ2ZgHAk+3K813EgyScHdWmWO2yzn1UuOW6WXk5yIiouIiICIoc6EEovLXSvSAiIgKt7+FD3rwgIiICIiD1S3Vyppbq5AREQFZTVaspoLW0ido3jcCTjAk53Ch1OI2zOxB2idj6hatDXawhx3a55GSMm3MgHoHD5gq6nqaQvuphzXFxEXSxxDRP7OD5sY6ZESqTLLdppybXDDbbrz5ec7eXj1c2AkBdJmp00i6i8thp+M3XSbsz5mxaBtsdpUafUaW0CpSqF2ZLakTgxucZI6dPedGLnQFK6Z1WlLT+C6RgOBIG5gubdk/5sxv1HnxGm3NN0lzyYcQA01HWtAkCQ23kGIxMgOci3sr6e6p+C4tIZYL3XNA+NxM7kn1AgY5tZrNKP+wT5SDLnZceoFxt+pI5O6Dloug7U6e8OFPyw0lsktuFQEtiRiwR7uduIiX6nSyy2i+0El4LzLgQ4AAg4AJZ9D8w5yLpivpbRNGpMeYh5i4ztJwNt5269bX19FDSKVU5Mi90gXCJzBkXbbdZmQHHUFS7cxt09kKDs6NjQx7ry10OAgjAba7YkEkkQI4Kx614dcQI8v1P7xAwPYKAOn/KjU0y0EOBBg4IIMfNQOaiIgIiIBWclaFW9nCCtWMqcqtEGhUvfKiVCAiKWtlBACtayF6a2EKChERB6pbq5U0t1cgIiICspqtWU0Hsrf2VWqtDxSph8lgMsLrTDrTjb9oyeFgK6HZNCq4VDRcG292TJj96HT6Q76qRdW1Vc9zNFoIcXMDWOBcSPNLQeobMwDAJBV47TqkH/APKC6QJ7txIqF10EZmQRDfY5Srp9UX0rqjS919h/kpnExEWkxPLpjdRodPq5f3dSD3vml4E1DYbiDv8AE3pOCInCgeK+urkPp+Hpi9jQQ2i4mCC0Pbkw6A4Xb4PCjUanUSxzqQabagEB7HuDmh7iSHBwIa2REYkdYVetGooi57/j8roIJwL7XGIB/EPWd+kLK7tKqSHF7pEwcSCRBPvGEHS+8K4bb4VgkuB/AfmYYGAfIiPUDEQqvvDUB092GfhRBY4NdSY41XYefNMmTuQeTKyjtivJPeukmTtk4zt6BU1tdUfbc4m0PAPWHyHfUGPkpHRZqa4qVPw6YexrQ4TaAAHAlwuyIq5zDYbsArhqtSHl5o0iaz6TBIn8RhwwQ6d2ZuJi3ouUe0apLnF2XBocbW5AmAcZ3I9sbYUVNfUcZLsywzADiWfCSQJMT1Qb/HVmucW0A0O7k2Gk4iaRmYxMmoZ9KkcLL2i6q8h9SlYGtDfLSLGfEcn1krwO0qt117rrXAHYgOi6I6mPznfK8VtbUe1rHOlrTLWwA0YgQBsADAGwQZ1JUKSg72geA0bSDUMXMHmAaWyHeowsHaJGQ2Ia0gRkRl28mcuKrXmt8LvYqBz0REBERARFDnQg8VG9VWpc6VCAiIg9MbKuWdWsfyg9qCpUFBQiIg9Ut1cqaW6uQEREBWU1WrKaD2Vr7O0Qq33Ei23b1n/RZCtGk1bqd1oaZiZ9J4PqtOHcZlN3gpxJlcbt8Xd/we/hxFzm7si5rywj/wAhHuRyF7b9i6hnyvx/J+9aQPUHfgZKxU/tVqmxFTYkiS45LQ0nJ3gAenRVj7S6nbvD/wCb+Z/e5yujfwenr7ufZxuvp7Nbfsq6GEXecw3LN77II6eaAZ2kTuJ9s+ybjBbcQTAcC0g9cdTjO22dlzh2/XgC4QDIEugGZkC7Bkk/NWf4m1MEXmCQfifuJP73JJU7+B09fdGzj9fR0P8AB1S5rDcC4vDZczJa0uPrEA5WfUfZo04vvEyB8JyNxhZKn2gru+JwOIyXHEERl3BI+ZXl/btZ0BxaQJIBLiASZJEnElJnwPOevuXDj+V9PZyyilIXG7EIphIQQpKQhQbF4rfC72K9rxW+F3sVA56IiAiIgFUEq9VvZwgrUtbK9Np8q0IPBpqohaF5c2UFKKSIUIPbHqyVQpDoQQiIg9Ut1cqaW6uQEREBWU1WrKaDX4TyNcHCSx77YMhjX2TO2TP09RNmn0FzLy60G+Db5BbHxPmGyTEZPpkTlFV1pbc60mS2TbPMbTgKLzFsmJmJ8t0RdHMYlSNvZ/Z3ei4vLRLh8IdtZ0kEkmoMDgyQsAV1HVPYCGPe0HcAkDaFSgIiICIiAiIgIiIC2aLTNc0kzvG/oFjXS7M+E/zH9AgqXit8LvYr2vFb4XexUDnoiICIiAiIgIiICIiCHNlUubCvUEIKEUubChARFIEoJpbq5eGMhe0BERAVlNVqymg9IiKQREQEREBERAREQEREBdLsz4T/ADH9Auaul2Z8J/mP6BB70+mDgXOdaM5idiAT0xLmj5+hijXUSy4Hg/kSD8wQR8lo02rLARnfBBAcJiRJBwbW9OnvNGurX3GABBgDpkk/mSfmoHKREQEREBERAREQEREBERBBCrNNWog8Np8r2iICIiAiIgKymq1ZTQaBpnen1U+Fd6fVdXSd1aO8vmZxtbG3vP8AypHdZm7d2f2o6em09N4zCDk+Fd6fVPCu9Pqu24UAYmoQDviSPp/Qf64kGHwrvT6p4V3p9VuRBh8K70+qeFd6fVbkQYfCu9PqnhXen1W5EGHwrvT6p4V3p9VuRBh8K70+qUdS5gIEb9edv6LcuY/c+5/VB1dJoi8STAujDXOJME4A32zlZtbRLJBgywEETBBEgiY/sLVodf3cAiQHXCHEEGIx0+XX6R7+0Gvp1YLG22sg+sNA/UE/5leY43C5W8+ilysyk05dXzyKLhyEuHIWeq6UUXDkJcOQmolFFw5CXDkJqJRRcOQlw5CaiUUXDkJcOQmolFFw5CXDkJqJRRcOQlw5CaiUUXDkJcOQmolFFw5CXDkJqJRRcOQlw5CaiVZTVVw5CspuHIU6j6TsjRtqTe4iGtgAgEzuc9B/X5H12bpGVK3dl3l88O2kDY59MwuENYf4VPjT/Cmo62joB9VrCRBdEzAPGcxP9VXqWBr3taZAc4A8gGAVzfGn+FPGn+FNRuRYfGn+FPGn+FNRuRYvGH+FPGHgINi3ajR02gxWa49AG4+IDJBMbk9TAXF8YeAnjDwEHW1Gma1xAqscPNBbJmDiR0JH99VXQptIdcYiOvvOOuwXN8YeAnjDwEG4gczng7crlv3Puf1V3jT/AArOXeyaj75hZY6QS8nHAbgz77j/AE66+yzTAf3oBFmBBuLu8b5QR8Mi4T6oi7Pls14tnb8x4GeWizTs05A7w1WnzTABbv5WjE7Rmf1x4qdzc0ND7ZcXGReR0aBt0n/NHSURe7t7st3Z41vdXnuQ4N9d59N8RG61al2mubYPLbUuw4ZgWAckGd9+pUomzub+yoihbSyC4fHh2SWk52gNdAwZIJVOnNMVAXgmncZB+KwyATHUYOOERNpuX6w6c953TSP+mKcknAAuJn5z6xHVYYUIpmOiLlqmEhQilCYSFCIJhIUIgmEhQiCYSFCIJhIUIgmEhQiCYSFCIJhIUIgmEhQiDn9sg2st3l8e/duW7tqlo/wfDGpAqeeH1SXUM+dwqHynAEN5dnAki8H5jxbhx+XSfl9d8k+Cx4/wluWVn1XwvadmCtQoFjy11cVLAGtDvwe8sy4F0utuiAc534sq0dL5i12qkh0C8WA/s5yfeZ642gi4f1OXSPW/aeF/PL7z2Vs0unsBNXVB9glsts7zEi4Aw3czBPoYz7qUdPJcx2pn8S1jnC0GPJkZdkjc7AzsLiJfictPCJw+U8OWXfl957NX2es7sXlgxUguBLLu8O4bna75wrNXUY0uIw2424zbJj8kRfSy7eFMp0j4G/Vxbjetf//Z",
+        "textAnswer": true
+      },
+      {
+        "id": "p2q2",
+        "text": "Who is the biological father of both Nebula and Gamora?",
+        "options": [
+          "Ronan the Accuser",
+          "The Collector",
+          "Thanos",
+          "Ego"
+        ],
+        "correct": 2,
+        "timer": 20,
+        "image": "",
+        "textAnswer": false
+      },
+      {
+        "id": "p2q3",
+        "text": "What is the name of the weapon Thor has forged to replace Mjolnir?",
+        "options": [
+          "Gungnir",
+          "Stormbreaker",
+          "Jarnbjorn",
+          "Thunderstrike"
+        ],
+        "correct": 1,
+        "timer": 20,
+        "image": "",
+        "textAnswer": false
+      },
+      {
+        "id": "p2q4",
+        "text": "In Avengers: Age of Ultron, which stone was inside Loki's scepter?",
+        "options": [
+          "Space Stone",
+          "Reality Stone",
+          "Mind Stone",
+          "Power Stone"
+        ],
+        "correct": 2,
+        "timer": 20,
+        "image": "",
+        "textAnswer": false
+      },
+      {
+        "id": "p2q5",
+        "text": "What is the name of Wakanda's most advanced ore used in Captain America's shield?",
+        "options": [
+          "Adamantium",
+          "Uru",
+          "Vibranium",
+          "Carbonadium"
+        ],
+        "correct": 2,
+        "timer": 20,
+        "image": "",
+        "textAnswer": false
+      }
+    ],
+    [
+      {
+        "id": "p3q1",
+        "text": "Which Avenger snapped the gauntlet to bring back everyone in Endgame before Thanos's army arrived?",
+        "options": [
+          "Thor",
+          "Iron Man",
+          "Captain America",
+          "Hulk"
+        ],
+        "correct": 3,
+        "timer": 25,
+        "image": ""
+      },
+      {
+        "id": "p3q2",
+        "text": "What quantum method allows time travel in Avengers: Endgame?",
+        "options": [
+          "Time Stone alone",
+          "Quantum Realm via Tony's GPS",
+          "Tesseract inversion",
+          "Ancient One's astral projection"
+        ],
+        "correct": 1,
+        "timer": 25,
+        "image": ""
+      },
+      {
+        "id": "p3q3",
+        "text": "What phrase does Tony Stark say when he makes the final snap in Endgame?",
+        "options": [
+          "\"For the people\"",
+          "\"Avengers Assemble\"",
+          "\"I am Iron Man\"",
+          "\"Part of the journey is the end\""
+        ],
+        "correct": 2,
+        "timer": 20,
+        "image": ""
+      },
+      {
+        "id": "p3q4",
+        "text": "In Captain America: Civil War, what is the Sokovia Accords designed to do?",
+        "options": [
+          "Disband S.H.I.E.L.D.",
+          "Put the Avengers under UN oversight",
+          "Ban all superheroes from operating",
+          "Establish a new Avengers headquarters"
+        ],
+        "correct": 1,
+        "timer": 25,
+        "image": ""
+      },
+      {
+        "id": "p3q5",
+        "text": "Who created Ultron?",
+        "options": [
+          "Tony Stark alone",
+          "Bruce Banner alone",
+          "Tony Stark and Bruce Banner together",
+          "Nick Fury and Tony Stark"
+        ],
+        "correct": 2,
+        "timer": 20,
+        "image": ""
+      }
+    ],
+    [
+      {
+        "id": "p4q1",
+        "text": "What are the names of Thor's parents?",
+        "options": [
+          "Odin and Frigg",
+          "Odin and Frigga",
+          "Bor and Bestla",
+          "Heimdall and Sif"
+        ],
+        "correct": 1,
+        "timer": 20,
+        "image": "https://i.etsystatic.com/7973668/r/il/7b9729/6831352088/il_fullxfull.6831352088_t03i.jpg",
+        "textAnswer": false
+      },
+      {
+        "id": "p4q2",
+        "text": "Which Avenger was the first to wield Mjolnir on-screen?",
+        "options": [
+          "Thor",
+          "Vision",
+          "Captain America",
+          "Hulk"
+        ],
+        "correct": 1,
+        "timer": 20,
+        "image": "",
+        "textAnswer": false
+      },
+      {
+        "id": "p4q3",
+        "text": "In Doctor Strange, what relic allows him to open portals?",
+        "options": [
+          "Eye of Agamotto",
+          "Cloak of Levitation",
+          "Sling Ring",
+          "Wand of Watoomb"
+        ],
+        "correct": 2,
+        "timer": 20,
+        "image": "",
+        "textAnswer": false
+      },
+      {
+        "id": "p4q4",
+        "text": "What is the name of the organization led by Nick Fury?",
+        "options": [
+          "S.H.I.E.L.D.",
+          "A.I.M.",
+          "HYDRA",
+          "S.W.O.R.D."
+        ],
+        "correct": 0,
+        "timer": 20,
+        "image": "",
+        "textAnswer": false
+      },
+      {
+        "id": "p4q5",
+        "text": "Which metal is used to create Captain America's original shield?",
+        "options": [
+          "Vibranium",
+          "Adamantium",
+          "Uru",
+          "Promethium"
+        ],
+        "correct": 0,
+        "timer": 20,
+        "image": "",
+        "textAnswer": false
+      }
+    ],
+    [
+      {
+        "id": "p5q1",
+        "text": "Visit the official Marvel website and find the release year of the first Avengers movie. What year was it released?",
+        "options": [
+          "2010",
+          "2011",
+          "2012",
+          "2013"
+        ],
+        "correct": 2,
+        "timer": 30,
+        "image": "",
+        "linkFriendly": true,
+        "externalUrl": "https://www.marvel.com",
+        "textAnswer": true,
+        "correctText": ""
+      },
+      {
+        "id": "p5q2",
+        "text": "Go to Wikipedia and search for \"Tony Stark\". What is the name of his mother?",
+        "options": [
+          "Maria Stark",
+          "Sarah Stark",
+          "Patricia Stark",
+          "Jennifer Stark"
+        ],
+        "correct": 0,
+        "timer": 30,
+        "image": "",
+        "linkFriendly": true,
+        "externalUrl": "https://en.wikipedia.org",
+        "textAnswer": true,
+        "correctText": "hello"
+      },
+      {
+        "id": "p5q3",
+        "text": "Search for \"MCU Phase 4 movies list\" on any search engine. How many movies were officially released in Phase 4?",
+        "options": [
+          "5",
+          "6",
+          "7",
+          "8"
+        ],
+        "correct": 2,
+        "timer": 30,
+        "image": "",
+        "linkFriendly": true,
+        "externalUrl": "https://www.google.com",
+        "textAnswer": true,
+        "correctText": ""
+      }
+    ]
+  ],
+  "backupQuestions": [
+    {
+      "id": "bq1",
+      "text": "What is the name of Thor's home realm?",
+      "options": [
+        "Midgard",
+        "Vanaheim",
+        "Asgard",
+        "Alfheim"
+      ],
+      "correct": 2,
+      "timer": 20,
+      "image": "",
+      "textAnswer": false
+    },
+    {
+      "id": "bq2",
+      "text": "What color is the Mind Stone?",
+      "options": [
+        "Blue",
+        "Orange",
+        "Green",
+        "Yellow"
+      ],
+      "correct": 3,
+      "timer": 20,
+      "image": "",
+      "textAnswer": false
+    },
+    {
+      "id": "bq3",
+      "text": "Who is the leader of the Black Order serving Thanos?",
+      "options": [
+        "Corvus Glaive",
+        "Proxima Midnight",
+        "Ebony Maw",
+        "Cull Obsidian"
+      ],
+      "correct": 2,
+      "timer": 25,
+      "image": "",
+      "textAnswer": false
+    },
+    {
+      "id": "bq2",
+      "text": "What color is the Mind Stone?",
+      "options": [
+        "Blue",
+        "Orange",
+        "Green",
+        "Yellow"
+      ],
+      "correct": 3,
+      "timer": 20,
+      "image": ""
+    },
+    {
+      "id": "bq3",
+      "text": "Who is the leader of the Black Order serving Thanos?",
+      "options": [
+        "Corvus Glaive",
+        "Proxima Midnight",
+        "Ebony Maw",
+        "Cull Obsidian"
+      ],
+      "correct": 2,
+      "timer": 25,
+      "image": ""
+    }
+  ]
+}

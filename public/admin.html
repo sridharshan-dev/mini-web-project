@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🛡️ Admin — Avengers Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Rajdhani:wght@400;500;600;700&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+  :root {
+    --bg: #07070f;
+    --surface: #0e0e1c;
+    --surface2: #141428;
+    --surface3: #1a1a32;
+    --border: #1e1e3f;
+    --border2: #2a2a50;
+    --gold: #c9a84c;
+    --gold-light: #f0d070;
+    --text: #e8e8f8;
+    --text-dim: #6868aa;
+    --correct: #4caf50;
+    --wrong: #f44336;
+    --warn: #ff9800;
+    --power: #ff3333;
+    --reality: #ffd700;
+    --space: #4fc3f7;
+    --info: #64b5f6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── LAYOUT ── */
+  .app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex; align-items: center; gap: 16px;
+    flex-shrink: 0;
+  }
+  .topbar-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 16px; font-weight: 700;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(201,168,76,0.3));
+  }
+  .topbar-room {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 24px; font-weight: 700;
+    color: var(--gold); letter-spacing: 4px;
+  }
+  .topbar-state {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 10px;
+    font-size: 11px; letter-spacing: 2px;
+    color: var(--text-dim);
+  }
+  .topbar-teams { margin-left: auto; font-size: 13px; color: var(--text-dim); }
+  .topbar-teams span { color: var(--gold); font-weight: 700; font-size: 18px; }
+
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── PANELS ── */
+  .panel-left { width: 280px; flex-shrink: 0; border-right: 1px solid var(--border); overflow-y: auto; }
+  .panel-center { flex: 1; overflow-y: auto; }
+  .panel-right { width: 320px; flex-shrink: 0; border-left: 1px solid var(--border); overflow-y: auto; }
+
+  .panel-section {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+  }
+  .panel-section-title {
+    font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 3px; color: var(--gold); text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    background: linear-gradient(135deg, #6a3a0a, var(--gold), #6a3a0a);
+    border: none; border-radius: 6px; padding: 8px 16px;
+    color: #000; font-family: 'Rajdhani', sans-serif;
+    font-size: 12px; font-weight: 700; letter-spacing: 2px;
+    cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; filter: none; }
+  .btn-sm { padding: 5px 12px; font-size: 11px; }
+  .btn-secondary {
+    background: var(--surface3); border: 1px solid var(--border2);
+    color: var(--text-dim);
+  }
+  .btn-secondary:hover { border-color: var(--gold); color: var(--text); background: var(--surface2); filter: none; transform: none; }
+  .btn-danger {
+    background: rgba(244,67,54,0.15); border: 1px solid rgba(244,67,54,0.4);
+    color: var(--wrong);
+  }
+  .btn-danger:hover { background: rgba(244,67,54,0.25); filter: none; transform: none; }
+  .btn-success {
+    background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.4);
+    color: var(--correct);
+  }
+  .btn-success:hover { background: rgba(76,175,80,0.25); filter: none; transform: none; }
+  .btn-warn {
+    background: rgba(255,152,0,0.15); border: 1px solid rgba(255,152,0,0.4);
+    color: var(--warn);
+  }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ── INPUTS ── */
+  .input {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 7px 10px;
+    color: var(--text); font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px; outline: none; width: 100%;
+    transition: border-color 0.2s;
+  }
+  .input:focus { border-color: var(--gold); }
+  textarea.input { resize: vertical; min-height: 60px; }
+
+  /* ── TEAM LIST ── */
+  .team-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 6px;
+    background: var(--surface2); margin-bottom: 4px;
+    transition: background 0.2s;
+  }
+  .team-row:hover { background: var(--surface3); }
+  .t-avatar { font-size: 20px; }
+  .t-avatar img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
+  .avatar-img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
+  .t-name { flex: 1; font-weight: 600; font-size: 15px; }
+  .t-score { font-family: 'Rajdhani', sans-serif; font-size: 18px; color: var(--gold); font-weight: 700; }
+  .t-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); }
+  .t-dot.online { background: var(--correct); box-shadow: 0 0 6px var(--correct); }
+  .t-stones { display: flex; gap: 3px; }
+  .t-stone { font-size: 12px; opacity: 0.7; }
+
+  /* ── ANSWER STATUS ── */
+  .ans-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px;
+  }
+  .ans-chip {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 8px;
+    font-size: 12px; display: flex; align-items: center; gap: 4px;
+  }
+  .ans-chip.answered { border-color: var(--correct); background: rgba(76,175,80,0.1); }
+  .ans-chip.using-stone { border-color: var(--reality); background: rgba(255,215,0,0.05); }
+  .ans-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim); }
+  .ans-dot.answered { background: var(--correct); }
+
+  /* ── QUESTION EDITOR ── */
+  .q-editor {
+    border: 1px solid var(--border2); border-radius: 8px;
+    padding: 12px; margin-bottom: 10px; background: var(--surface);
+    position: relative;
+  }
+  .q-editor.active { border-color: var(--gold); box-shadow: 0 0 15px rgba(201,168,76,0.1); }
+  .q-editor-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  }
+  .q-num {
+    font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700;
+    color: var(--gold); background: rgba(201,168,76,0.1);
+    border-radius: 4px; padding: 2px 8px;
+  }
+  .q-timer-label { color: var(--text-dim); font-size: 12px; margin-left: auto; }
+  .option-row {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+  }
+  .opt-letter {
+    font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px;
+    width: 20px; text-align: center; color: var(--text-dim);
+  }
+  .opt-correct-btn {
+    width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border2);
+    cursor: pointer; background: transparent; transition: all 0.15s; flex-shrink: 0;
+  }
+  .opt-correct-btn.correct { border-color: var(--correct); background: var(--correct); }
+
+  /* ── LEADERBOARD ── */
+  .lb-table { width: 100%; border-collapse: collapse; }
+  .lb-table th {
+    font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase;
+    padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left;
+  }
+  .lb-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .lb-table tr:hover td { background: var(--surface2); }
+  .rank-badge {
+    font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+    display: inline-block; width: 28px; text-align: center;
+  }
+  .rank-badge.r1 { color: #ffd700; }
+  .rank-badge.r2 { color: #c0c0c0; }
+  .rank-badge.r3 { color: #cd7f32; }
+
+  /* ── GAME FLOW ── */
+  .phase-tabs { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
+  .phase-tab {
+    padding: 5px 12px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; cursor: pointer;
+    font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600;
+    letter-spacing: 1px; color: var(--text-dim);
+    transition: all 0.15s;
+  }
+  .phase-tab:hover { border-color: var(--gold); color: var(--text); }
+  .phase-tab.active-tab { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.1); }
+
+  /* ── SETUP SCREEN ── */
+  #setup-screen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100vh; gap: 20px;
+  }
+  .setup-logo {
+    font-family: 'Cinzel Decorative', serif; font-size: 30px; font-weight: 700;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(201,168,76,0.4));
+  }
+  .setup-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 32px; width: 400px;
+  }
+  .setup-card::before {
+    content: ''; display: block; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: -32px -32px 24px;
+  }
+  .setup-input-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .big-room-code {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 48px; font-weight: 700;
+    color: var(--gold); text-align: center;
+    letter-spacing: 8px;
+    filter: drop-shadow(0 0 20px rgba(201,168,76,0.4));
+    margin: 8px 0;
+  }
+  .setup-hint { color: var(--text-dim); font-size: 12px; text-align: center; letter-spacing: 1px; }
+
+  /* ── TIMER DISPLAY ── */
+  .timer-big {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 64px; font-weight: 700;
+    text-align: center; color: var(--gold);
+    transition: color 0.3s;
+  }
+  .timer-big.warn { color: var(--warn); }
+  .timer-big.critical { color: var(--wrong); animation: timerPulse 0.5s infinite; }
+  @keyframes timerPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+  /* ── CURRENT Q DISPLAY ── */
+  .curr-q-card {
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 12px; margin-bottom: 10px;
+  }
+  .curr-q-image {
+    width: 100%; max-width: 180px; aspect-ratio: 1 / 1; object-fit: contain;
+    border-radius: 8px; border: 1px solid var(--border2); margin-bottom: 8px;
+    background: var(--surface);
+  }
+  .curr-q-text { font-size: 15px; font-weight: 600; margin-bottom: 8px; line-height: 1.3; }
+  .curr-q-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .curr-opt {
+    padding: 6px 8px; border-radius: 5px;
+    background: var(--surface3); font-size: 13px;
+    border: 1px solid transparent;
+  }
+  .curr-opt.is-correct { border-color: var(--correct); background: rgba(76,175,80,0.15); color: var(--correct); font-weight: 700; }
+
+  /* ── LOG ── */
+  #event-log {
+    height: 140px; overflow-y: auto;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px;
+    font-size: 12px; font-family: monospace;
+  }
+  .log-entry { margin-bottom: 3px; color: var(--text-dim); }
+  .log-entry.good { color: var(--correct); }
+  .log-entry.gold { color: var(--gold); }
+  .log-entry.warn { color: var(--warn); }
+
+  /* ── STONE MGMT ── */
+  .stone-grant-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+
+  /* ── MISC ── */
+  .divider { height: 1px; background: var(--border); margin: 10px 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .badge-gold { background: rgba(201,168,76,0.2); color: var(--gold); }
+  .badge-green { background: rgba(76,175,80,0.2); color: var(--correct); }
+  .badge-red { background: rgba(244,67,54,0.2); color: var(--wrong); }
+  .badge-blue { background: rgba(79,195,247,0.2); color: var(--space); }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .tab-btn {
+    padding: 8px 16px; cursor: pointer;
+    font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim);
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+  .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- ========= SETUP SCREEN ========= -->
+<div id="setup-screen">
+  <div class="setup-logo">⚡ AVENGERS QUIZ</div>
+  <div style="color:var(--text-dim);font-size:12px;letter-spacing:4px;text-transform:uppercase;">Admin Control Panel</div>
+  <div class="setup-card">
+    <div style="margin-bottom:16px">
+      <button class="btn" style="width:100%;font-size:14px;padding:12px" onclick="createRoom()">CREATE NEW ROOM</button>
+    </div>
+    <div style="color:var(--text-dim);text-align:center;margin-bottom:12px;font-size:12px;letter-spacing:2px">— OR RECONNECT —</div>
+    <div class="setup-input-row">
+      <input class="input" id="rejoin-code" placeholder="Room code" style="letter-spacing:4px;text-transform:uppercase;font-size:18px">
+      <button class="btn btn-secondary" onclick="reconnectRoom()">REJOIN</button>
+    </div>
+  </div>
+  <div id="setup-room-display" style="display:none;text-align:center">
+    <div style="color:var(--text-dim);font-size:11px;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px">ROOM CODE — SHARE WITH TEAMS</div>
+    <div class="big-room-code" id="display-code">——</div>
+    <div class="setup-hint">Players connect at <strong>http://YOUR_IP:3000</strong></div>
+    <div style="margin-top:20px">
+      <button class="btn" style="font-size:14px;padding:12px 32px" onclick="enterAdmin()">ENTER ADMIN PANEL →</button>
+    </div>
+  </div>
+  <div id="setup-error" style="color:var(--wrong);font-size:13px;min-height:18px;text-align:center"></div>
+</div>
+
+<!-- ========= ADMIN APP ========= -->
+<div class="app" id="admin-app" style="display:none">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title">⚡ AVENGERS QUIZ</div>
+    <div style="font-size:11px;color:var(--text-dim);letter-spacing:2px">ROOM:</div>
+    <div class="topbar-room" id="tb-code">——</div>
+    <div class="topbar-state" id="tb-state">WAITING</div>
+    <div style="font-family:Rajdhani;font-size:13px;color:var(--text-dim)">Phase <span id="tb-phase" style="color:var(--gold);font-weight:700">—</span> · Q<span id="tb-q" style="color:var(--gold);font-weight:700">—</span>/<span id="tb-q-total" style="color:var(--gold);font-weight:700">5</span></div>
+    <div class="topbar-teams">Teams: <span id="tb-teams">0</span></div>
+    <div id="conn-dot" style="width:8px;height:8px;border-radius:50%;background:var(--correct);box-shadow:0 0 6px var(--correct);margin-left:8px"></div>
+  </div>
+
+  <div class="main">
+    <!-- LEFT: TEAMS + LOG -->
+    <div class="panel-left">
+      <div class="panel-section">
+        <div class="panel-section-title">Teams <span id="team-count-badge" class="badge badge-gold">0</span></div>
+        <div id="team-list"></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-section-title">Answer Status</div>
+        <div id="answer-status" style="color:var(--text-dim);font-size:12px;">No active question</div>
+        <div style="margin-top:6px;font-size:12px;color:var(--text-dim)">Answered: <span id="ans-count" style="color:var(--gold);font-weight:700">0</span> / <span id="ans-total">0</span></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-section-title">Stone Actions</div>
+        <div class="stone-grant-row">
+          <select class="input" id="grant-team" style="flex:1">
+            <option value="">Team...</option>
+          </select>
+          <select class="input" id="grant-stone" style="width:90px">
+            <option value="power">🔴 Power</option>
+            <option value="reality">🟡 Reality</option>
+            <option value="space">🔵 Space</option>
+          </select>
+          <button class="btn btn-sm" onclick="grantStone()">Grant Stone</button>
+        </div>
+
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-section-title">Event Log</div>
+        <div id="event-log"></div>
+      </div>
+    </div>
+
+    <!-- CENTER: GAME CONTROL -->
+    <div class="panel-center">
+      <div class="tabs">
+        <div class="tab-btn active" onclick="switchTab('control')">CONTROL</div>
+        <div class="tab-btn" onclick="switchTab('questions')">QUESTIONS</div>
+        <div class="tab-btn" onclick="switchTab('leaderboard')">LEADERBOARD</div>
+      </div>
+
+      <!-- CONTROL TAB -->
+      <div class="tab-content active" id="tab-control">
+        <div class="panel-section">
+          <div class="panel-section-title">Game Flow</div>
+
+          <!-- Phase start buttons -->
+          <div style="margin-bottom:10px">
+            <div style="font-size:11px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Start Phase</div>
+            <div class="phase-tabs" id="phase-tabs">
+              <button class="phase-tab" onclick="startPhase(1)">Phase 1</button>
+              <button class="phase-tab" onclick="startPhase(2)">Phase 2</button>
+              <button class="phase-tab" onclick="startPhase(3)">Phase 3</button>
+              <button class="phase-tab" onclick="startPhase(4)">Phase 4</button>
+              <button class="phase-tab" onclick="startPhase(5)">Phase 5</button>
+            </div>
+          </div>
+
+          <div class="btn-row" style="margin-bottom:10px">
+            <button class="btn" id="btn-next-q" onclick="nextQuestion()" disabled>▶ NEXT QUESTION</button>
+            <button class="btn btn-warn" id="btn-force-end" onclick="forceEndQuestion()" disabled>⏹ END QUESTION</button>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-secondary" id="btn-stone-select" onclick="triggerStoneSelection()" disabled>💎 STONE SELECTION</button>
+            <button class="btn btn-secondary" id="btn-lock-stones" onclick="lockStoneSelection()" style="display:none">🔒 LOCK STONES</button>
+            <button class="btn btn-secondary" onclick="showLeaderboard()">📊 SHOW LB</button>
+          </div>
+          <div class="divider"></div>
+          <button class="btn btn-danger btn-sm" onclick="endGame()" style="width:100%">⛔ END GAME</button>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-section-title">Current Question</div>
+          <div class="timer-big" id="timer-display">—</div>
+          <div id="curr-q-display" style="color:var(--text-dim);font-size:13px;">No active question</div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-section-title">Result Preview</div>
+          <div id="result-preview" style="color:var(--text-dim);font-size:13px;">Awaiting question end...</div>
+        </div>
+      </div>
+
+      <!-- QUESTIONS TAB -->
+      <div class="tab-content" id="tab-questions">
+        <div class="panel-section">
+          <div class="phase-tabs" id="edit-phase-tabs">
+            <div class="phase-tab active-tab" onclick="editPhase(0)">Phase 1</div>
+            <div class="phase-tab" onclick="editPhase(1)">Phase 2</div>
+            <div class="phase-tab" onclick="editPhase(2)">Phase 3</div>
+            <div class="phase-tab" onclick="editPhase(3)">Phase 4</div>
+            <div class="phase-tab" onclick="editPhase(4)">Phase 5</div>
+            <div class="phase-tab" onclick="editPhase('backup')">Backup</div>
+          </div>
+          <div id="q-editor-area"></div>
+          <button class="btn" style="width:100%;margin-top:10px" onclick="saveQuestions()">💾 SAVE QUESTIONS</button>
+          <div id="save-status" style="text-align:center;color:var(--correct);font-size:12px;margin-top:6px;min-height:16px;"></div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD TAB -->
+      <div class="tab-content" id="tab-leaderboard">
+        <div class="panel-section">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div class="panel-section-title" style="margin:0">Live Leaderboard</div>
+            <button class="btn btn-sm btn-secondary" onclick="refreshLeaderboard()">⟳ Refresh</button>
+          </div>
+          <div id="admin-lb"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: LIVE FEED -->
+    <div class="panel-right">
+      <div class="panel-section">
+        <div class="panel-section-title">Answer Feed</div>
+        <div id="answer-feed" style="font-size:13px;color:var(--text-dim)">Answers will appear here during a question.</div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-section-title">Stone Activity</div>
+        <div id="stone-feed" style="font-size:13px;color:var(--text-dim)">Stone usage will appear here.</div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-section-title">Stone Selections</div>
+        <div id="stone-select-feed" style="font-size:13px;color:var(--text-dim)">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const socket = io();
+let roomCode = null;
+let appState = {
+  gameState: 'WAITING_ROOM',
+  currentPhase: 0,
+  currentQuestionIndex: -1,
+  totalQuestions: 5,
+  questions: [[], [], [], [], []],
+  backupQuestions: [],
+  teams: [],
+  timerRemaining: 0,
+  timerDuration: 0,
+  currentAdminQ: null,
+};
+let editingPhase = 0;
+let localTimerInterval = null;
+let answerCount = 0;
+const DEFAULT_AVATAR = 'https://placehold.co/64x64?text=TEAM';
+const STONE_IMAGES = {
+  power: 'https://placehold.co/48x48?text=POW',
+  reality: 'https://placehold.co/48x48?text=REA',
+  space: 'https://placehold.co/48x48?text=SPA',
+};
+
+// =================== SETUP ===================
+function createRoom() {
+  socket.emit('admin:createRoom', {}, (res) => {
+    if (res.error) { document.getElementById('setup-error').textContent = res.error; return; }
+    roomCode = res.roomCode;
+    document.getElementById('display-code').textContent = res.roomCode;
+    document.getElementById('setup-room-display').style.display = 'block';
+    document.querySelector('.setup-card').style.display = 'none';
+    document.getElementById('setup-error').textContent = '';
+  });
+}
+
+function reconnectRoom() {
+  const code = document.getElementById('rejoin-code').value.trim().toUpperCase();
+  if (!code) return;
+  socket.emit('admin:reconnect', { roomCode: code }, (res) => {
+    if (res.error) { document.getElementById('setup-error').textContent = res.error; return; }
+    roomCode = code;
+    socket.roomCode = code;
+    appState.questions = res.questions;
+    appState.backupQuestions = res.backupQuestions;
+    appState.teams = res.teams;
+    appState.gameState = res.gameState;
+    appState.currentPhase = res.currentPhase;
+    appState.currentQuestionIndex = res.currentQuestionIndex;
+    appState.timerRemaining = res.timerRemaining;
+    appState.timerDuration = res.timerDuration;
+    appState.totalQuestions = res.currentPhase === 5 ? 3 : 5;
+    initAdminUI();
+    enterAdminPanel();
+  });
+}
+
+function enterAdmin() {
+  // Fetch questions from server if not already loaded
+  socket.emit('admin:getQuestions', {}, (res) => {
+    if (res && res.questions) {
+      appState.questions = res.questions || [[], [], [], [], []];
+      appState.backupQuestions = res.backupQuestions || [];
+    }
+    initAdminUI();
+    enterAdminPanel();
+  });
+}
+
+function enterAdminPanel() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('admin-app').style.display = 'flex';
+  document.getElementById('tb-code').textContent = roomCode;
+}
+
+function initAdminUI() {
+  renderTeamList();
+  renderEditPhase();
+  renderAdminLB([]);
+  updateTopbar();
+}
+
+// =================== TABS ===================
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    const names = ['control','questions','leaderboard'];
+    b.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  if (name === 'leaderboard') refreshLeaderboard();
+}
+
+// =================== TOPBAR ===================
+function updateTopbar() {
+  document.getElementById('tb-state').textContent = appState.gameState;
+  document.getElementById('tb-phase').textContent = appState.currentPhase || '—';
+  document.getElementById('tb-q').textContent = appState.currentQuestionIndex >= 0 ? appState.currentQuestionIndex + 1 : '—';
+  document.getElementById('tb-q-total').textContent = appState.totalQuestions || 5;
+  document.getElementById('tb-teams').textContent = appState.teams.length;
+  document.getElementById('team-count-badge').textContent = appState.teams.length;
+}
+
+// =================== TEAMS ===================
+function renderTeamList() {
+  const el = document.getElementById('team-list');
+  const sel = document.getElementById('grant-team');
+  sel.innerHTML = '<option value="">Team...</option>';
+  if (!appState.teams.length) { el.innerHTML = '<div style="color:var(--text-dim);font-size:13px;">No teams yet</div>'; return; }
+  el.innerHTML = appState.teams.map(t => `
+    <div class="team-row">
+      <div class="t-dot ${t.connected ? 'online' : ''}"></div>
+      <div class="t-avatar"><img src="${t.avatar || DEFAULT_AVATAR}" alt="Avatar"></div>
+      <div class="t-name">${t.name}</div>
+      <div class="t-stones">
+        ${(t.stones?.power || 0) > 0 ? `<span class="t-stone"><img class="avatar-img" src="${STONE_IMAGES.power}" alt="Power">${t.stones.power}</span>` : ''}
+        ${(t.stones?.reality || 0) > 0 ? `<span class="t-stone"><img class="avatar-img" src="${STONE_IMAGES.reality}" alt="Reality">${t.stones.reality}</span>` : ''}
+        ${(t.stones?.space || 0) > 0 ? `<span class="t-stone"><img class="avatar-img" src="${STONE_IMAGES.space}" alt="Space">${t.stones.space}</span>` : ''}
+      </div>
+      <div class="t-score">${t.totalScore || 0}</div>
+      <button class="btn btn-danger btn-sm" onclick="kickTeam('${t.name.replace(/'/g,"\\'")}')">✕</button>
+    </div>
+  `).join('');
+  appState.teams.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.name; opt.textContent = t.name;
+    sel.appendChild(opt);
+  });
+}
+
+function grantStone() {
+  const teamSelect = document.getElementById('grant-team');
+  const stoneSelect = document.getElementById('grant-stone');
+  const teamName = teamSelect.value;
+  const stoneType = stoneSelect.value;
+  
+  if (!teamName || !stoneType) {
+    alert('Please select a team and stone type');
+    return;
+  }
+  
+  if (!confirm(`Grant ${stoneType} stone to ${teamName}?`)) return;
+  
+  socket.emit('admin:grantStone', { teamName, stoneType });
+  addLog(`Granted ${stoneType} stone to ${teamName}`, 'gold');
+}
+
+function kickTeam(name) {
+  if (!confirm(`Remove team "${name}"?`)) return;
+  socket.emit('admin:kickTeam', { teamName: name });
+}
+
+// =================== GAME CONTROL ===================
+function startPhase(phase) {
+  if (!confirm(`Start Phase ${phase}?`)) return;
+  socket.emit('admin:startPhase', { phase });
+  appState.currentPhase = phase;
+  appState.currentQuestionIndex = -1;
+  appState.gameState = 'PHASE_ACTIVE';
+  appState.totalQuestions = phase === 5 ? 3 : 5;
+  document.getElementById('btn-next-q').disabled = false;
+  document.getElementById('btn-force-end').disabled = true;
+  document.getElementById('btn-stone-select').disabled = phase > 1 ? false : true;
+  document.querySelectorAll('.phase-tab').forEach((t, i) => t.classList.toggle('active-tab', i+1 === phase));
+  updateTopbar();
+  addLog(`Phase ${phase} started`, 'gold');
+  clearAnswerFeed();
+  document.getElementById('answer-status').innerHTML = '<span style="color:var(--text-dim)">Phase started. Click Next Question.</span>';
+}
+
+function nextQuestion() {
+  socket.emit('admin:nextQuestion', {});
+  document.getElementById('btn-next-q').disabled = true;
+  document.getElementById('btn-force-end').disabled = false;
+  answerCount = 0;
+  document.getElementById('ans-count').textContent = '0';
+  document.getElementById('ans-total').textContent = appState.teams.length;
+  clearAnswerFeed();
+}
+
+function forceEndQuestion() {
+  socket.emit('admin:forceEndQuestion');
+  document.getElementById('btn-force-end').disabled = true;
+}
+
+function triggerStoneSelection() {
+  socket.emit('admin:triggerStoneSelection');
+  document.getElementById('btn-stone-select').disabled = true;
+  document.getElementById('btn-lock-stones').style.display = 'inline-block';
+  addLog('Stone selection triggered', 'gold');
+  clearStoneFeed();
+}
+
+function lockStoneSelection() {
+  socket.emit('admin:lockStoneSelection');
+  document.getElementById('btn-lock-stones').style.display = 'none';
+  document.getElementById('btn-stone-select').disabled = false;
+  addLog('Stone selection locked', 'gold');
+}
+
+function showLeaderboard() {
+  socket.emit('admin:showLeaderboard');
+  addLog('Leaderboard broadcast', 'gold');
+}
+
+function endGame() {
+  if (!confirm('End the game for everyone?')) return;
+  socket.emit('admin:endGame');
+}
+
+function refreshLeaderboard() {
+  socket.emit('admin:reconnect', { roomCode }, (res) => {
+    if (res.leaderboard) renderAdminLB(res.leaderboard);
+  });
+}
+
+// =================== QUESTIONS EDITOR ===================
+function editPhase(phaseIdx) {
+  editingPhase = phaseIdx;
+  document.querySelectorAll('#edit-phase-tabs .phase-tab').forEach((t, i) => {
+    const labels = [0,1,2,3,4,'backup'];
+    t.classList.toggle('active-tab', labels[i] == phaseIdx);
+  });
+  renderEditPhase();
+}
+
+function renderEditPhase() {
+  const area = document.getElementById('q-editor-area');
+  const questions = editingPhase === 'backup'
+    ? (appState.backupQuestions || [])
+    : (appState.questions[editingPhase] || []);
+  const labels = ['A','B','C','D'];
+  
+  if (questions.length === 0) {
+    // Show empty state with add button
+    area.innerHTML = `
+      <div style="text-align:center;padding:40px 20px;background:rgba(201,168,76,0.05);border:2px dashed var(--border);border-radius:8px;margin-bottom:16px">
+        <div style="color:var(--text-dim);font-size:14px;margin-bottom:16px">No questions in this ${editingPhase === 'backup' ? 'backup' : 'phase'} yet</div>
+        <button class="btn" onclick="addQuestion(${editingPhase === 'backup' ? "'backup'" : editingPhase})" style="padding:10px 20px">+ ADD QUESTION</button>
+      </div>
+    `;
+    return;
+  }
+  
+  area.innerHTML = questions.map((q, qi) => {
+    const isTextAnswer = q.textAnswer;
+    return `
+    <div class="q-editor ${appState.currentQuestionIndex === qi && appState.currentPhase - 1 === editingPhase ? 'active' : ''}" id="qed-${editingPhase}-${qi}">
+      <div class="q-editor-header">
+        <div class="q-num">Q${qi+1}</div>
+        <div class="q-type-toggle" style="display:flex;gap:6px;align-items:center">
+          <label style="font-size:11px;color:var(--text-dim)">Type:</label>
+          <select id="q-type-${editingPhase}-${qi}" onchange="changeQuestionType(${editingPhase === 'backup' ? "'backup'" : editingPhase}, ${qi}, this.value)" style="padding:4px 8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:3px;font-size:12px;cursor:pointer">
+            <option value="0" ${!isTextAnswer ? 'selected' : ''}>Multiple Choice</option>
+            <option value="1" ${isTextAnswer ? 'selected' : ''}>Text Answer</option>
+          </select>
+        </div>
+        <div class="q-timer-label">Timer: <input type="number" class="input" style="width:65px;display:inline-block;padding:4px 6px" id="q-timer-${editingPhase}-${qi}" value="${q.timer}" min="5" max="120"> sec</div>
+      </div>
+      <textarea class="input" id="q-text-${editingPhase}-${qi}" rows="2" style="margin-bottom:8px">${q.text}</textarea>
+      <div class="option-row" style="margin-bottom:8px">
+        <div class="opt-letter">IMG</div>
+        <input class="input" id="q-img-${editingPhase}-${qi}" placeholder="Image URL (optional)" value="${q.image || ''}" style="flex:1">
+      </div>
+      ${isTextAnswer ? `
+        <div class="option-row" style="background:rgba(76,175,80,0.05);padding:10px;border-radius:4px;margin-bottom:8px;border:1px solid rgba(76,175,80,0.2)">
+          <label style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:6px">Correct Text Answer (case-insensitive match):</label>
+          <input class="input" id="q-correct-text-${editingPhase}-${qi}" placeholder="e.g., 'Iron Man' or '2012'" value="${q.correctText || ''}" style="width:100%;padding:6px">
+        </div>
+      ` : `
+        ${q.options.map((opt, oi) => `
+        <div class="option-row">
+          <div class="opt-letter">${labels[oi]}</div>
+          <input class="input" id="q-opt-${editingPhase}-${qi}-${oi}" value="${opt}" style="flex:1">
+          <button class="opt-correct-btn ${q.correct === oi ? 'correct' : ''}" onclick="setCorrect(${editingPhase === 'backup' ? '"backup"' : editingPhase}, ${qi}, ${oi})" title="Mark correct"></button>
+        </div>
+        `).join('')}
+      `}
+      <div style="margin-top:10px;display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="addQuestion(${editingPhase === 'backup' ? "'backup'" : editingPhase})" style="flex:1">+ Add</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteQuestion(${editingPhase === 'backup' ? "'backup'" : editingPhase}, ${qi})" style="flex:1">Delete</button>
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+function setCorrect(phaseIdx, qi, optIdx) {
+  if (phaseIdx === 'backup') {
+    appState.backupQuestions[qi].correct = optIdx;
+  } else {
+    appState.questions[phaseIdx][qi].correct = optIdx;
+  }
+  renderEditPhase();
+}
+
+function changeQuestionType(phaseIdx, qi, typeValue) {
+  const isTextAnswer = typeValue === '1';
+  const questions = phaseIdx === 'backup'
+    ? appState.backupQuestions
+    : appState.questions[phaseIdx];
+  const q = questions[qi];
+  
+  // Update the question object
+  q.textAnswer = isTextAnswer;
+  
+  if (isTextAnswer) {
+    // Initialize text answer fields if not present
+    if (!q.correctText) q.correctText = '';
+  } else {
+    // Make sure options are initialized for multiple choice
+    if (!q.options) q.options = ['', '', '', ''];
+    if (q.correct === undefined) q.correct = 0;
+  }
+  
+  // Re-render to show the appropriate form
+  renderEditPhase();
+}
+
+function saveQuestions() {
+  // Collect edited values
+  const questions = editingPhase === 'backup'
+    ? appState.backupQuestions
+    : appState.questions[editingPhase];
+  questions.forEach((q, qi) => {
+    const textEl = document.getElementById(`q-text-${editingPhase}-${qi}`);
+    const timerEl = document.getElementById(`q-timer-${editingPhase}-${qi}`);
+    const imgEl = document.getElementById(`q-img-${editingPhase}-${qi}`);
+    const typeEl = document.getElementById(`q-type-${editingPhase}-${qi}`);
+    
+    if (textEl) q.text = textEl.value;
+    if (timerEl) q.timer = parseInt(timerEl.value) || 20;
+    if (imgEl) q.image = imgEl.value.trim();
+    
+    // Handle question type change
+    if (typeEl) {
+      const isTextAnswer = typeEl.value === '1';
+      q.textAnswer = isTextAnswer;
+      
+      if (isTextAnswer) {
+        // Switch to text answer
+        const correctTextEl = document.getElementById(`q-correct-text-${editingPhase}-${qi}`);
+        if (correctTextEl) q.correctText = correctTextEl.value.trim();
+        // Keep options array for compatibility, but they're not used
+      } else {
+        // Switch to multiple choice
+        q.options = q.options || ['', '', '', ''];
+        q.options.forEach((_, oi) => {
+          const optEl = document.getElementById(`q-opt-${editingPhase}-${qi}-${oi}`);
+          if (optEl) q.options[oi] = optEl.value;
+        });
+      }
+    }
+  });
+
+  if (editingPhase === 'backup') {
+    socket.emit('admin:updateBackup', { backupQuestions: appState.backupQuestions });
+  } else {
+    socket.emit('admin:updateQuestions', { questions: appState.questions });
+  }
+  const s = document.getElementById('save-status');
+  s.textContent = '✓ Saved'; s.style.color = 'var(--correct)';
+  setTimeout(() => s.textContent = '', 2000);
+}
+
+function addQuestion(phaseIdx) {
+  const newQuestion = {
+    id: `q-${Date.now()}`,
+    text: 'New question text here',
+    options: ['Option A', 'Option B', 'Option C', 'Option D'],
+    correct: 0,
+    timer: 20,
+    image: '',
+    textAnswer: false,
+    correctText: '',
+    linkFriendly: false,
+    externalUrl: ''
+  };
+  
+  if (phaseIdx === 'backup') {
+    appState.backupQuestions.push(newQuestion);
+  } else {
+    appState.questions[phaseIdx].push(newQuestion);
+  }
+  
+  renderEditPhase();
+}
+
+function deleteQuestion(phaseIdx, qIdx) {
+  if (!confirm('Delete this question?')) return;
+  if (phaseIdx === 'backup') {
+    appState.backupQuestions.splice(qIdx, 1);
+  } else {
+    appState.questions[phaseIdx].splice(qIdx, 1);
+  }
+  renderEditPhase();
+}
+
+// =================== ADMIN LEADERBOARD ===================
+function renderAdminLB(lb) {
+  const el = document.getElementById('admin-lb');
+  if (!lb.length) { el.innerHTML = '<div style="color:var(--text-dim)">No data yet</div>'; return; }
+  el.innerHTML = `<table class="lb-table">
+    <thead><tr><th>#</th><th></th><th>Team</th><th>Score</th><th>Time</th>${lb[0]?.phaseScores?.map((_,i) => `<th>P${i+1}</th>`).join('') || ''}</tr></thead>
+    <tbody>
+    ${lb.map((t, i) => {
+      const rankClass = i===0?'r1':i===1?'r2':i===2?'r3':'';
+      const rankSymbol = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
+      const t_sec = t.totalResponseTime;
+      const timeStr = `${Math.floor(t_sec/60)}:${String(t_sec%60).padStart(2,'0')}`;
+      return `<tr>
+        <td><span class="rank-badge ${rankClass}">${rankSymbol}</span></td>
+        <td><img class="avatar-img" src="${t.avatar || DEFAULT_AVATAR}" alt="Avatar"></td>
+        <td style="font-weight:700">${t.name} <span style="color:var(--text-dim);font-size:11px">${t.connected?'●':'○'}</span></td>
+        <td style="color:var(--gold);font-weight:700;font-size:16px">${t.totalScore}</td>
+        <td style="color:var(--text-dim);font-size:12px">${timeStr}</td>
+        ${t.phaseScores?.map(s => `<td style="font-size:12px;color:var(--text-dim)">${s}</td>`).join('') || ''}
+      </tr>`;
+    }).join('')}
+    </tbody></table>`;
+}
+
+// =================== FEEDS ===================
+function clearAnswerFeed() {
+  document.getElementById('answer-feed').innerHTML = '';
+  document.getElementById('answer-status').innerHTML = '';
+  answerCount = 0;
+}
+
+function clearStoneFeed() {
+  document.getElementById('stone-feed').innerHTML = '';
+}
+
+function addAnswerEntry(data) {
+  const feed = document.getElementById('answer-feed');
+  const team = appState.teams.find(t => t.name === data.teamName);
+  const avatar = team?.avatar || DEFAULT_AVATAR;
+  const div = document.createElement('div');
+  div.style.cssText = 'padding:5px 8px;border-radius:5px;background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.2);margin-bottom:4px;display:flex;align-items:center;gap:6px;font-size:13px;';
+  div.innerHTML = `<img class="avatar-img" src="${avatar}" alt="Avatar"><span style="flex:1">${data.teamName}</span><span style="color:var(--text-dim);">${(data.responseTime / 1).toFixed(1)}s</span><span style="color:var(--correct)">✓</span>`;
+  feed.insertBefore(div, feed.firstChild);
+  answerCount++;
+  document.getElementById('ans-count').textContent = answerCount;
+
+  // Update chip
+  const chip = document.querySelector(`.ans-chip[data-team="${data.teamName}"]`);
+  if (chip) { chip.classList.add('answered'); chip.querySelector('.ans-dot').classList.add('answered'); }
+}
+
+function addStoneEntry(data) {
+  const feed = document.getElementById('stone-feed');
+  const team = appState.teams.find(t => t.name === data.teamName);
+  const avatar = team?.avatar || DEFAULT_AVATAR;
+  const div = document.createElement('div');
+  div.style.cssText = 'padding:5px 8px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);margin-bottom:4px;display:flex;gap:6px;align-items:center;font-size:13px;';
+  div.innerHTML = `<img class="avatar-img" src="${avatar}" alt="Avatar"><span>${data.teamName}</span><span style="margin-left:auto"><img class="avatar-img" src="${STONE_IMAGES[data.stoneType]}" alt="Stone"> ×${data.stonesLeft} left</span>`;
+  feed.insertBefore(div, feed.firstChild);
+}
+
+// =================== LOG ===================
+function addLog(msg, type = '') {
+  const log = document.getElementById('event-log');
+  const d = document.createElement('div');
+  d.className = `log-entry ${type}`;
+  const t = new Date().toLocaleTimeString('en', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  d.textContent = `[${t}] ${msg}`;
+  log.insertBefore(d, log.firstChild);
+}
+
+// =================== SOCKET EVENTS ===================
+socket.on('connect', () => {
+  document.getElementById('conn-dot').style.background = 'var(--correct)';
+  document.getElementById('conn-dot').style.boxShadow = '0 0 6px var(--correct)';
+  if (roomCode) socket.roomCode = roomCode;
+});
+socket.on('disconnect', () => {
+  document.getElementById('conn-dot').style.background = 'var(--wrong)';
+  document.getElementById('conn-dot').style.boxShadow = '0 0 6px var(--wrong)';
+  addLog('Connection lost', 'warn');
+});
+
+socket.on('teamJoined', (data) => {
+  appState.teams = data.teams;
+  renderTeamList();
+  updateTopbar();
+  addLog(`${data.name} joined`, 'good');
+});
+
+socket.on('teamDisconnected', (data) => {
+  const t = appState.teams.find(t => t.name === data.name);
+  if (t) t.connected = false;
+  renderTeamList();
+  addLog(`${data.name} disconnected`, 'warn');
+});
+
+socket.on('question:admin', (data) => {
+  appState.currentAdminQ = data;
+  appState.currentQuestionIndex = data.questionNum - 1;
+  appState.timerDuration = data.timerDuration;
+  appState.timerRemaining = data.timerDuration;
+  appState.gameState = 'QUESTION_ACTIVE';
+  appState.totalQuestions = data.totalQuestions || appState.totalQuestions || 5;
+  updateTopbar();
+
+  // Show question
+  const q = data.question;
+  const labels = ['A','B','C','D'];
+  document.getElementById('curr-q-display').innerHTML = `
+    <div class="curr-q-card">
+      <div style="font-size:11px;color:var(--text-dim);letter-spacing:2px;margin-bottom:6px">PHASE ${data.phaseNum} · Q${data.questionNum}/${appState.totalQuestions}</div>
+      ${q.image ? `<img class="curr-q-image" src="${q.image}" alt="Question image">` : ''}
+      <div class="curr-q-text">${q.text}</div>
+      <div class="curr-q-opts">
+        ${q.options.map((opt, i) => `<div class="curr-opt ${i === q.correct ? 'is-correct' : ''}">${labels[i]}: ${opt}</div>`).join('')}
+      </div>
+    </div>
+  `;
+
+  // Build answer chips
+  const chips = appState.teams.map(t =>
+    `<div class="ans-chip" data-team="${t.name}"><div class="ans-dot"></div><span><img class="avatar-img" src="${t.avatar || DEFAULT_AVATAR}" alt="Avatar"> ${t.name}</span></div>`
+  ).join('');
+  document.getElementById('answer-status').innerHTML = `<div class="ans-grid">${chips}</div>`;
+  document.getElementById('result-preview').textContent = 'Awaiting question end...';
+
+  clearTimerDisplay();
+  addLog(`Q${data.questionNum} started (P${data.phaseNum})`, 'good');
+});
+
+socket.on('timerTick', (data) => {
+  appState.timerRemaining = data.remaining;
+  const el = document.getElementById('timer-display');
+  el.textContent = data.remaining;
+  el.className = 'timer-big' + (data.remaining <= 5 ? ' critical' : data.remaining <= data.total * 0.4 ? ' warn' : '');
+});
+
+socket.on('questionEnded', (data) => {
+  appState.gameState = 'QUESTION_ENDED';
+  document.getElementById('btn-next-q').disabled = false;
+  document.getElementById('btn-force-end').disabled = true;
+  clearTimerDisplay();
+
+  const labels = ['A','B','C','D'];
+  const resultHtml = data.results.map(r => {
+    const color = r.correct ? 'var(--correct)' : r.answer !== null ? 'var(--wrong)' : 'var(--text-dim)';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)">
+      <img class="avatar-img" src="${appState.teams.find(t=>t.name===r.teamName)?.avatar||DEFAULT_AVATAR}" alt="Avatar">
+      <span style="flex:1;font-size:13px">${r.teamName}</span>
+      <span style="color:${color};font-size:12px">${r.answer !== null ? labels[r.answer] : '—'}</span>
+      <span style="color:var(--gold);font-weight:700;font-size:14px">+${r.score}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('result-preview').innerHTML = `
+    <div style="margin-bottom:8px;font-size:11px;color:var(--text-dim);letter-spacing:2px">CORRECT: <span style="color:var(--correct)">${labels[data.correctAnswer]}: ${data.correctOptionText}</span></div>
+    ${resultHtml}`;
+  addLog(`Question ended. Correct: ${labels[data.correctAnswer]}`, 'gold');
+  renderAdminLB(data.leaderboard);
+
+  // Sync team scores
+  if (data.leaderboard) {
+    data.leaderboard.forEach(lb => {
+      const t = appState.teams.find(t => t.name === lb.name);
+      if (t) t.totalScore = lb.totalScore;
+    });
+    renderTeamList();
+  }
+});
+
+socket.on('answerReceived', (data) => {
+  addAnswerEntry(data);
+  addLog(`${data.teamName} answered (${data.responseTime}s)`, 'good');
+});
+
+socket.on('stoneUsed', (data) => {
+  addStoneEntry(data);
+  addLog(`${data.teamName} used ${data.stoneType} stone`, 'warn');
+  const t = appState.teams.find(t => t.name === data.teamName);
+  if (t && t.stones) t.stones[data.stoneType] = data.stonesLeft;
+  renderTeamList();
+});
+
+socket.on('stoneGranted', (data) => {
+  const t = appState.teams.find(t => t.name === data.teamName);
+  if (t && data.stones) t.stones = data.stones;
+  renderTeamList();
+  addLog(`Granted ${data.stoneType} stone to ${data.teamName}`, 'gold');
+});
+
+socket.on('stoneSelectionLocked', () => {
+  document.getElementById('btn-lock-stones').style.display = 'none';
+  document.getElementById('btn-stone-select').disabled = false;
+  addLog('Stone selection locked', 'gold');
+});
+
+socket.on('stoneSelected', (data) => {
+  const feed = document.getElementById('stone-select-feed');
+  const t = appState.teams.find(t => t.name === data.teamName);
+  const avatar = t?.avatar || DEFAULT_AVATAR;
+  feed.innerHTML = `<div style="padding:6px 8px;border-radius:5px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);margin-bottom:4px;font-size:13px"><img class="avatar-img" src="${avatar}" alt="Avatar"> ${data.teamName}: <img class="avatar-img" src="${STONE_IMAGES[data.stoneType]}" alt="Stone"> ${data.stoneType.toUpperCase()}</div>` + feed.innerHTML;
+  addLog(`${data.teamName} selected ${data.stoneType} stone (${data.totalSelected}/${data.totalEligible})`, 'gold');
+  if (t && t.stones) t.stones[data.stoneType]++;
+  renderTeamList();
+
+  if (data.totalSelected >= data.totalEligible) {
+    addLog('All stones selected! Lock selection when ready.', 'gold');
+  }
+});
+
+socket.on('phaseStarted', (data) => {
+  appState.currentPhase = data.phase;
+  appState.totalQuestions = data.totalQuestions || appState.totalQuestions || 5;
+  addLog(`Phase ${data.phase} started`, 'gold');
+  updateTopbar();
+});
+
+socket.on('phaseComplete', (data) => {
+  appState.gameState = 'LEADERBOARD';
+  addLog(`Phase ${data.phase} complete`, 'gold');
+  renderAdminLB(data.leaderboard);
+  updateTopbar();
+  document.getElementById('btn-next-q').disabled = true;
+  document.getElementById('btn-force-end').disabled = true;
+  clearTimerDisplay();
+});
+
+socket.on('gameEnded', (data) => {
+  appState.gameState = 'GAME_ENDED';
+  addLog('GAME ENDED', 'gold');
+  renderAdminLB(data.leaderboard);
+  updateTopbar();
+  clearTimerDisplay();
+});
+
+socket.on('teamList', (data) => {
+  appState.teams = data.teams;
+  renderTeamList();
+  updateTopbar();
+});
+
+function clearTimerDisplay() {
+  document.getElementById('timer-display').textContent = '—';
+  document.getElementById('timer-display').className = 'timer-big';
+}
+</script>
+</body>
+</html>
