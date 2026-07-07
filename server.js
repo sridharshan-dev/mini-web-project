@@ -12,6 +12,9 @@ const io = new Server(server, { cors: { origin: '*' } });
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
+// =================== SECURITY ===================
+const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || Math.floor(100000 + Math.random() * 900000).toString();
+
 // =================== DEFAULT QUESTIONS ===================
 const DEFAULT_QUESTIONS = {
   phases: [[], [], [], [], []],
@@ -87,20 +90,21 @@ function createRoom(adminSocketId) {
     stoneSelectionActive: false,
     stoneSelectionWinners: [],
     stoneSelectionsReceived: new Set(),
+    createdAt: Date.now(),
   };
   rooms.set(code, room);
   return room;
 }
 
-function createTeam(name, avatar, socketId) {
+function createTeam(name, avatar, socketId, sessionToken) {
   return {
-    name, avatar, socketId,
+    name, avatar, socketId, sessionToken,
     connected: true,
     totalScore: 0,
     phaseScores: [0, 0, 0, 0, 0],
     totalResponseTime: 0,
     answers: {},
-    stones: { power: 0, reality: 0, space: 0 },
+    stones: { power: 0, reality: 0, space: 0, time: 0, soul: 0 },
     stonesUsedThisQuestion: [],
     activeStones: {},
     stoneSelectedThisRound: false,
@@ -158,7 +162,7 @@ function getStoneSelectionPayload(room) {
     : [];
   return {
     eligible: eligible.map(t => ({ name: t.name, avatar: t.avatar, rank: t.rank })),
-    stoneTypes: ['power','reality','space'],
+    stoneTypes: ['power','reality','space','time','soul'],
   };
 }
 
@@ -237,6 +241,11 @@ function endQuestion(room) {
       }
     }
 
+    if (ans.soulStoneActive) {
+      if (correct) score += 50;
+      else if ((isTextAnswer && ans.answerText !== undefined) || (!isTextAnswer && ans.answer !== undefined)) score -= 20;
+    }
+
     ans.correct = correct;
     ans.score = score;
     team.answers[key] = ans;
@@ -301,7 +310,8 @@ function endQuestion(room) {
 io.on('connection', (socket) => {
 
   // ===== ADMIN EVENTS =====
-  socket.on('admin:createRoom', (_, cb) => {
+  socket.on('admin:createRoom', (data, cb) => {
+    if (data.passcode !== ADMIN_PASSCODE) return cb({ error: 'Invalid admin passcode' });
     const room = createRoom(socket.id);
     socket.join(room.code);
     socket.roomCode = room.code;
@@ -310,6 +320,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin:reconnect', (data, cb) => {
+    if (data.passcode !== ADMIN_PASSCODE) return cb({ error: 'Invalid admin passcode' });
     const room = rooms.get(data.roomCode);
     if (!room) return cb({ error: 'Room not found' });
     room.adminSocketId = socket.id;
@@ -347,8 +358,6 @@ io.on('connection', (socket) => {
     const room = rooms.get(data.roomCode || socket.roomCode);
     if (!room || room.adminSocketId !== socket.id) return;
     room.questions = data.questions;
-    questionsStore.phases = data.questions;
-    try { saveQuestionsToFile(questionsStore); } catch (err) { console.warn('Failed to save questions:', err.message); }
     if (cb) cb({ success: true });
   });
 
@@ -356,8 +365,6 @@ io.on('connection', (socket) => {
     const room = rooms.get(data.roomCode || socket.roomCode);
     if (!room || room.adminSocketId !== socket.id) return;
     room.backupQuestions = data.backupQuestions;
-    questionsStore.backupQuestions = data.backupQuestions;
-    try { saveQuestionsToFile(questionsStore); } catch (err) { console.warn('Failed to save backup questions:', err.message); }
     if (cb) cb({ success: true });
   });
 
@@ -493,9 +500,19 @@ io.on('connection', (socket) => {
     if (!room || room.adminSocketId !== socket.id) return;
     clearTimer(room);
     room.gameState = 'GAME_ENDED';
+    room.endedAt = Date.now();
     const lb = getLeaderboard(room);
     io.to(room.code).emit('gameEnded', { leaderboard: lb });
     io.to(room.adminSocketId).emit('gameEnded', { leaderboard: lb });
+  });
+
+  socket.on('admin:destroyRoom', () => {
+    const room = rooms.get(socket.roomCode);
+    if (!room || room.adminSocketId !== socket.id) return;
+    clearTimer(room);
+    io.to(room.code).emit('roomDestroyed', {});
+    rooms.delete(room.code);
+    console.log(`🗑️ Admin destroyed room ${room.code}`);
   });
 
   socket.on('admin:kickTeam', (data) => {
@@ -513,7 +530,7 @@ io.on('connection', (socket) => {
 
   // ===== PLAYER EVENTS =====
   socket.on('player:join', (data, cb) => {
-    const { roomCode, teamName, avatar } = data;
+    const { roomCode, teamName, avatar, sessionToken } = data;
     if (!roomCode || !teamName || !avatar) return cb({ error: 'Missing fields' });
     const room = rooms.get(roomCode.toUpperCase());
     if (!room) return cb({ error: 'Room not found. Check your code.' });
@@ -522,12 +539,14 @@ io.on('connection', (socket) => {
     let team;
     if (room.teams.has(teamName)) {
       team = room.teams.get(teamName);
+      if (team.sessionToken !== sessionToken) return cb({ error: 'Team name already taken or invalid session.' });
       team.socketId = socket.id;
       team.connected = true;
       team.avatar = avatar;
     } else {
       if (room.gameState !== 'WAITING_ROOM') return cb({ error: 'Game already in progress. Cannot join now.' });
-      team = createTeam(teamName, avatar, socket.id);
+      const newToken = crypto.randomBytes(16).toString('hex');
+      team = createTeam(teamName, avatar, socket.id, newToken);
       room.teams.set(teamName, team);
     }
 
@@ -551,6 +570,7 @@ io.on('connection', (socket) => {
       stones: { ...team.stones },
       teamName: team.name,
       avatar: team.avatar,
+      sessionToken: team.sessionToken,
     };
 
     if (room.gameState === 'QUESTION_ACTIVE') {
@@ -595,6 +615,7 @@ io.on('connection', (socket) => {
       team.answers[key].answerText = answerText;
       team.answers[key].responseTime = responseTime;
       team.answers[key].powerStoneActive = !!team.activeStones.power;
+      team.answers[key].soulStoneActive = !!team.activeStones.soul;
       team.answers[key].locked = true;
 
       io.to(room.adminSocketId).emit('answerReceived', {
@@ -616,6 +637,7 @@ io.on('connection', (socket) => {
       team.answers[key].answer = answer;
       team.answers[key].responseTime = responseTime;
       team.answers[key].powerStoneActive = !!team.activeStones.power;
+      team.answers[key].soulStoneActive = !!team.activeStones.soul;
       team.answers[key].locked = true;
 
       io.to(room.adminSocketId).emit('answerReceived', {
@@ -643,7 +665,7 @@ io.on('connection', (socket) => {
     if (!team) return cb({ error: 'Team not found' });
 
     const { stoneType } = data;
-    if (!['power','reality','space'].includes(stoneType)) return cb({ error: 'Invalid stone type' });
+    if (!['power','reality','space','time','soul'].includes(stoneType)) return cb({ error: 'Invalid stone type' });
     if (team.stones[stoneType] <= 0) return cb({ error: 'You do not have this stone' });
     if (team.stonesUsedThisQuestion.includes(stoneType)) return cb({ error: 'Already used this stone this question' });
 
@@ -708,6 +730,26 @@ io.on('connection', (socket) => {
       io.to(room.adminSocketId).emit('stoneUsed', { teamName: team.name, stoneType: 'space', stonesLeft: team.stones.space });
       return cb({ success: true, stoneType: 'space' });
     }
+
+    if (stoneType === 'time') {
+      room.timerRemaining += 15;
+      team.stones.time--;
+      team.stonesUsedThisQuestion.push('time');
+      io.to(team.socketId).emit('stonesUpdated', { stones: { ...team.stones }, activeStones: { ...team.activeStones } });
+      io.to(room.code).emit('timeExtended', { additionalSeconds: 15, teamName: team.name });
+      io.to(room.adminSocketId).emit('stoneUsed', { teamName: team.name, stoneType: 'time', stonesLeft: team.stones.time });
+      return cb({ success: true, stoneType: 'time' });
+    }
+
+    if (stoneType === 'soul') {
+      if (alreadyAnswered) return cb({ error: 'Cannot use Soul Stone after answering' });
+      team.activeStones.soul = true;
+      team.stones.soul--;
+      team.stonesUsedThisQuestion.push('soul');
+      io.to(team.socketId).emit('stonesUpdated', { stones: { ...team.stones }, activeStones: { ...team.activeStones } });
+      io.to(room.adminSocketId).emit('stoneUsed', { teamName: team.name, stoneType: 'soul', stonesLeft: team.stones.soul });
+      return cb({ success: true, stoneType: 'soul' });
+    }
   });
 
   socket.on('player:selectStone', (data, cb) => {
@@ -736,11 +778,26 @@ io.on('connection', (socket) => {
   });
 });
 
+// =================== GARBAGE COLLECTION ===================
+setInterval(() => {
+  const now = Date.now();
+  for (const [code, room] of rooms.entries()) {
+    const endedLongAgo = room.endedAt && (now - room.endedAt > 2 * 60 * 60 * 1000);
+    const createdLongAgo = (now - room.createdAt > 12 * 60 * 60 * 1000);
+    if (endedLongAgo || createdLongAgo) {
+      clearTimer(room);
+      rooms.delete(code);
+      console.log(`🗑️ Garbage collected inactive room ${code}`);
+    }
+  }
+}, 30 * 60 * 1000);
+
 // =================== START ===================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`\n⚡ AVENGERS QUIZ SERVER RUNNING`);
   console.log(`──────────────────────────────────`);
+  console.log(`🔑 Admin Passcode: ${ADMIN_PASSCODE}`);
   console.log(`📱 Player UI: http://localhost:${PORT}/`);
   console.log(`🛡️  Admin Panel: http://localhost:${PORT}/admin.html`);
   console.log(`🌐 Network:  http://172.24.240.107:${PORT}/`);

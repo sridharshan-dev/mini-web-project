@@ -23,6 +23,10 @@
     --reality-glow: rgba(255,215,0,0.4);
     --space: #4fc3f7;
     --space-glow: rgba(79,195,247,0.4);
+    --time: #4caf50;
+    --time-glow: rgba(76,175,80,0.4);
+    --soul: #ff9800;
+    --soul-glow: rgba(255,152,0,0.4);
     --correct: #4caf50;
     --wrong: #f44336;
     --timer-warn: #ff9800;
@@ -78,6 +82,20 @@
   }
   .screen.active { display: flex; }
   .screen-inner { width: 100%; max-width: 500px; }
+  /* ── ANIMATIONS ── */
+  @keyframes screenShake {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    10%, 30%, 50%, 70%, 90% { transform: translate(-2px, 2px) rotate(-1deg); }
+    20%, 40%, 60%, 80% { transform: translate(2px, -2px) rotate(1deg); }
+  }
+  .anim-shake { animation: screenShake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+  
+  @keyframes screenFlash {
+    0% { box-shadow: inset 0 0 0 0 var(--flash-color, rgba(255,255,255,0)); }
+    10% { box-shadow: inset 0 0 100px 20px var(--flash-color, rgba(255,255,255,0.8)); }
+    100% { box-shadow: inset 0 0 0 0 var(--flash-color, rgba(255,255,255,0)); }
+  }
+  .anim-flash { animation: screenFlash 0.5s ease-out; }
 
   /* ── LOGO ── */
   .logo {
@@ -395,9 +413,9 @@
     font-size: 10px; color: var(--text-dim); letter-spacing: 3px;
     text-transform: uppercase; margin-bottom: 8px; text-align: center;
   }
-  .stones-row { display: flex; gap: 10px; justify-content: center; }
+  .stones-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
   .stone-btn {
-    flex: 1; max-width: 140px;
+    flex: 1 1 30%; max-width: 140px; min-width: 80px;
     border-radius: 8px;
     padding: 8px 6px;
     border: 2px solid transparent;
@@ -438,6 +456,18 @@
     color: var(--space);
   }
   .stone-space.active { background: rgba(79,195,247,0.3); border-color: var(--space); box-shadow: 0 0 12px var(--space-glow); }
+  .stone-time {
+    background: rgba(76,175,80,0.12);
+    border-color: rgba(76,175,80,0.4);
+    color: var(--time);
+  }
+  .stone-time.active { background: rgba(76,175,80,0.3); border-color: var(--time); box-shadow: 0 0 12px var(--time-glow); }
+  .stone-soul {
+    background: rgba(255,152,0,0.12);
+    border-color: rgba(255,152,0,0.4);
+    color: var(--soul);
+  }
+  .stone-soul.active { background: rgba(255,152,0,0.3); border-color: var(--soul); box-shadow: 0 0 12px var(--soul-glow); }
   .stone-btn:disabled { opacity: 0.3; cursor: not-allowed; }
   .stone-btn.used-this-q { opacity: 0.4; cursor: not-allowed; }
 
@@ -557,6 +587,18 @@
     filter: drop-shadow(0 0 20px rgba(201,168,76,0.5));
   }
   .winner-sub { text-align: center; color: var(--text-dim); font-size: 13px; letter-spacing: 3px; margin-bottom: 24px; }
+  .podium { display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin-bottom: 20px; height: 160px; }
+  .podium-spot { display: flex; flex-direction: column; align-items: center; border: 1px solid var(--border); border-radius: 8px 8px 0 0; width: 30%; position: relative; justify-content: flex-start; padding-top: 10px; }
+  .podium-1 { height: 140px; border-color: var(--gold); background: rgba(201,168,76,0.1); z-index: 3; }
+  .podium-2 { height: 110px; border-color: silver; background: rgba(192,192,192,0.1); z-index: 2; }
+  .podium-3 { height: 90px; border-color: #cd7f32; background: rgba(205,127,50,0.1); z-index: 1; }
+  .podium-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; margin-bottom: 5px; border: 2px solid var(--border); }
+  .podium-1 .podium-avatar { border-color: var(--gold); width: 44px; height: 44px; }
+  .podium-2 .podium-avatar { border-color: silver; }
+  .podium-3 .podium-avatar { border-color: #cd7f32; }
+  .podium-name { font-size: 11px; font-weight: 700; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%; color: var(--text); }
+  .podium-score { font-size: 14px; font-weight: 700; color: var(--gold); margin-top: 4px; }
+  .podium-rank { position: absolute; bottom: 5px; font-size: 24px; opacity: 0.2; font-family: 'Cinzel Decorative', serif; font-weight: 900; }
 
   /* ── TOAST ── */
   #toast {
@@ -743,6 +785,20 @@
           <div class="s-count" id="cnt-space">0</div>
         </div>
       </button>
+      <button class="stone-btn stone-time" id="stone-time" onclick="useStone('time')">
+        <span class="s-icon"><img id="icon-time" alt="Time stone"></span>
+        <div>
+          <div>TIME</div>
+          <div class="s-count" id="cnt-time">0</div>
+        </div>
+      </button>
+      <button class="stone-btn stone-soul" id="stone-soul" onclick="useStone('soul')">
+        <span class="s-icon"><img id="icon-soul" alt="Soul stone"></span>
+        <div>
+          <div>SOUL</div>
+          <div class="s-count" id="cnt-soul">0</div>
+        </div>
+      </button>
     </div>
   </div>
 </div>
@@ -812,6 +868,15 @@
 </div>
 
 <script>
+function escapeHTML(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[&<>'"\/]/g, function (s) {
+    return {
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;', '/': '&#x2F;'
+    }[s];
+  });
+}
+
 // =================== STATE ===================
 const socket = io();
 let state = {
@@ -847,6 +912,8 @@ const STONE_IMAGES = {
   power: 'https://ik.imagekit.io/3ku7rvecvz/power.jpeg',
   reality: 'https://ik.imagekit.io/3ku7rvecvz/reality.jpg',
   space: 'https://ik.imagekit.io/3ku7rvecvz/space.jpg',
+  time: 'https://placehold.co/48x48/228b22/FFFFFF?text=TIM',
+  soul: 'https://placehold.co/48x48/ff8c00/FFFFFF?text=SOU',
 };
 
 // =================== INIT ===================
@@ -888,7 +955,7 @@ function setAvatarImage(el, url) {
 }
 
 function setStoneImages() {
-  const ids = ['power','reality','space'];
+  const ids = ['power','reality','space','time','soul'];
   ids.forEach(type => {
     const icon = document.getElementById(`icon-${type}`);
     const choice = document.getElementById(`choice-${type}`);
@@ -910,7 +977,10 @@ function joinGame(auto = false) {
   document.getElementById('btnJoin').disabled = true;
   document.getElementById('btnJoin').textContent = auto ? 'RECONNECTING...' : 'CONNECTING...';
 
-  socket.emit('player:join', { roomCode: code, teamName: team, avatar }, (res) => {
+  const saved = JSON.parse(localStorage.getItem('avq_state') || '{}');
+  const sessionToken = saved.teamName === team ? saved.sessionToken : undefined;
+
+  socket.emit('player:join', { roomCode: code, teamName: team, avatar, sessionToken }, (res) => {
     document.getElementById('btnJoin').disabled = false;
     document.getElementById('btnJoin').textContent = 'ASSEMBLE';
     if (res.error) { errEl.textContent = res.error; return; }
@@ -922,7 +992,7 @@ function joinGame(auto = false) {
     state.currentPhase = res.currentPhase || 0;
     state.gameState = res.gameState;
 
-    localStorage.setItem('avq_state', JSON.stringify({ teamName: team, avatar, roomCode: code }));
+    localStorage.setItem('avq_state', JSON.stringify({ teamName: team, avatar, roomCode: code, sessionToken: res.sessionToken }));
     updateHUD();
 
     if (res.gameState === 'QUESTION_ACTIVE' && res.currentQuestion) {
@@ -968,16 +1038,17 @@ function updateHUD() {
 }
 
 function updateStoneUI() {
-  ['power','reality','space'].forEach(type => {
+  ['power','reality','space','time','soul'].forEach(type => {
     const cnt = document.getElementById(`cnt-${type}`);
     const btn = document.getElementById(`stone-${type}`);
     if (cnt) cnt.textContent = state.stones[type] || 0;
     if (btn) {
       const noStones = (state.stones[type] || 0) <= 0;
       const usedThisQ = state.stonesUsedThisQ.includes(type);
-      btn.disabled = noStones || usedThisQ || state.lockedAnswer !== null || state.currentPhase < 2;
+      btn.disabled = noStones || usedThisQ || state.lockedAnswer !== null || state.lockedTextAnswer !== null || state.currentPhase < 2;
       btn.classList.toggle('used-this-q', usedThisQ);
       if (type === 'power') btn.classList.toggle('active', !!state.activeStonesThisQ.power);
+      if (type === 'soul') btn.classList.toggle('active', !!state.activeStonesThisQ.soul);
     }
   });
 }
@@ -1177,6 +1248,11 @@ function useStone(type) {
       showToast('🟡 Reality Stone! 2 wrong options eliminated!', 'gold');
     } else if (type === 'space') {
       showToast('🔵 Space Stone! New question incoming!', 'gold');
+    } else if (type === 'time') {
+      showToast('🟢 Time Stone activated! +15 seconds!', 'time');
+    } else if (type === 'soul') {
+      state.activeStonesThisQ.soul = true;
+      showToast('🟠 Soul Stone activated! +50 if correct, -20 if wrong!', 'soul');
     }
     updateStoneUI();
   });
@@ -1206,7 +1282,36 @@ function confirmStone() {
 // =================== LEADERBOARD ===================
 function renderLeaderboard(lb, containerId) {
   const container = document.getElementById(containerId);
-  container.innerHTML = lb.map((t, i) => {
+  let html = '';
+  let listData = lb;
+  
+  if (containerId === 'end-lb' && lb.length >= 3) {
+    const t1 = lb[0], t2 = lb[1], t3 = lb[2];
+    html += `<div class="podium">
+      <div class="podium-spot podium-2">
+        <img class="podium-avatar" src="${escapeHTML(t2.avatar || DEFAULT_AVATAR)}" alt="Avatar">
+        <div class="podium-name">${escapeHTML(t2.name)}</div>
+        <div class="podium-score">${t2.totalScore}</div>
+        <div class="podium-rank">2</div>
+      </div>
+      <div class="podium-spot podium-1">
+        <img class="podium-avatar" src="${escapeHTML(t1.avatar || DEFAULT_AVATAR)}" alt="Avatar">
+        <div class="podium-name">${escapeHTML(t1.name)}</div>
+        <div class="podium-score">${t1.totalScore}</div>
+        <div class="podium-rank">1</div>
+      </div>
+      <div class="podium-spot podium-3">
+        <img class="podium-avatar" src="${escapeHTML(t3.avatar || DEFAULT_AVATAR)}" alt="Avatar">
+        <div class="podium-name">${escapeHTML(t3.name)}</div>
+        <div class="podium-score">${t3.totalScore}</div>
+        <div class="podium-rank">3</div>
+      </div>
+    </div>`;
+    listData = lb.slice(3);
+  }
+
+  html += listData.map((t, index) => {
+    const i = (containerId === 'end-lb' && lb.length >= 3) ? index + 3 : index;
     const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
     const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}`;
     const isMe = t.name === state.teamName;
@@ -1215,14 +1320,15 @@ function renderLeaderboard(lb, containerId) {
     const timeStr = `${mins}:${String(secs).padStart(2,'0')}`;
     return `<div class="lb-row ${isMe ? 'my-team' : ''}">
       <div class="lb-rank ${rankClass}">${rankEmoji}</div>
-      <img class="lb-avatar" src="${t.avatar || DEFAULT_AVATAR}" alt="Avatar">
+      <img class="lb-avatar" src="${escapeHTML(t.avatar || DEFAULT_AVATAR)}" alt="Avatar">
       <div style="flex:1">
-        <div class="lb-name">${t.name}${isMe ? ' <span style="color:var(--gold);font-size:11px;">(you)</span>' : ''}</div>
+        <div class="lb-name">${escapeHTML(t.name)}${isMe ? ' <span style="color:var(--gold);font-size:11px;">(you)</span>' : ''}</div>
         <div style="font-size:11px;color:var(--text-dim);">⏱ ${timeStr}</div>
       </div>
       <div class="lb-score">${t.totalScore}</div>
     </div>`;
   }).join('');
+  container.innerHTML = html;
 }
 
 // =================== TOAST ===================
@@ -1287,9 +1393,9 @@ socket.on('questionResult', (data) => {
     // Text answer display
     document.getElementById('r-correct-text').innerHTML = `
       <div style="margin-bottom:8px;font-size:14px;color:var(--text-dim)">Your Answer:</div>
-      <div style="padding:10px;background:var(--surface2);border-radius:4px;border-left:4px solid var(--gold);margin-bottom:12px;font-size:14px">${data.yourAnswer || '(No answer submitted)'}</div>
+      <div style="padding:10px;background:var(--surface2);border-radius:4px;border-left:4px solid var(--gold);margin-bottom:12px;font-size:14px">${escapeHTML(data.yourAnswer || '(No answer submitted)')}</div>
       <div style="margin-bottom:8px;font-size:14px;color:var(--text-dim)">Correct Answer:</div>
-      <div style="padding:10px;background:rgba(76,175,80,0.1);border-radius:4px;border-left:4px solid var(--correct);font-size:14px">${data.correctAnswer}</div>
+      <div style="padding:10px;background:rgba(76,175,80,0.1);border-radius:4px;border-left:4px solid var(--correct);font-size:14px">${escapeHTML(data.correctAnswer)}</div>
     `;
   } else {
     const correctText = last && last.options ? last.options[data.correctAnswer] : null;
@@ -1365,6 +1471,16 @@ socket.on('stoneSelectionLocked', () => {
   document.getElementById('ss-watch').style.display = 'none';
   document.getElementById('ss-sub').textContent = 'Stone selection complete. Get ready for the next phase!';
   showToast('Stone selection complete!', 'gold');
+});
+
+socket.on('roomDestroyed', () => {
+  showToast('Room destroyed by admin', 'error');
+  localStorage.removeItem('avq_state');
+  setTimeout(() => location.reload(), 1500);
+});
+
+socket.on('timeExtended', (data) => {
+  showToast(`+${data.additionalSeconds}s (Time Stone used by ${data.teamName})`, 'success');
 });
 
 socket.on('gameEnded', (data) => {

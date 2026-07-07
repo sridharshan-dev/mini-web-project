@@ -327,11 +327,12 @@
   <div style="color:var(--text-dim);font-size:12px;letter-spacing:4px;text-transform:uppercase;">Admin Control Panel</div>
   <div class="setup-card">
     <div style="margin-bottom:16px">
+      <input type="password" class="input" id="admin-passcode" placeholder="Admin Passcode" style="margin-bottom:12px;text-align:center;letter-spacing:4px;font-size:18px">
       <button class="btn" style="width:100%;font-size:14px;padding:12px" onclick="createRoom()">CREATE NEW ROOM</button>
     </div>
     <div style="color:var(--text-dim);text-align:center;margin-bottom:12px;font-size:12px;letter-spacing:2px">— OR RECONNECT —</div>
     <div class="setup-input-row">
-      <input class="input" id="rejoin-code" placeholder="Room code" style="letter-spacing:4px;text-transform:uppercase;font-size:18px">
+      <input class="input" id="rejoin-code" placeholder="Room code" style="letter-spacing:4px;text-transform:uppercase;font-size:18px;text-align:center">
       <button class="btn btn-secondary" onclick="reconnectRoom()">REJOIN</button>
     </div>
   </div>
@@ -367,30 +368,34 @@
         <div id="team-list"></div>
       </div>
 
-      <div class="panel-section">
-        <div class="panel-section-title">Answer Status</div>
-        <div id="answer-status" style="color:var(--text-dim);font-size:12px;">No active question</div>
-        <div style="margin-top:6px;font-size:12px;color:var(--text-dim)">Answered: <span id="ans-count" style="color:var(--gold);font-weight:700">0</span> / <span id="ans-total">0</span></div>
+      <div class="panel-section" style="background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: 8px;">
+        <div class="panel-section-title" style="margin-bottom: 8px; font-size: 11px;">Answer Status</div>
+        <div id="answer-status" style="color:var(--text);font-size:13px; font-weight:600;">No active question</div>
+        <div style="margin-top:4px;font-size:12px;color:var(--text-dim)">Answered: <span id="ans-count" style="color:var(--gold);font-weight:700">0</span> / <span id="ans-total">0</span></div>
       </div>
 
-      <div class="panel-section">
-        <div class="panel-section-title">Stone Actions</div>
+      <div class="panel-section" style="background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: 8px;">
+        <div class="panel-section-title" style="margin-bottom: 8px; font-size: 11px;">Stone Actions</div>
         <div class="stone-grant-row">
-          <select class="input" id="grant-team" style="flex:1">
+          <select class="input" id="grant-team" style="flex:1; padding: 6px; font-size: 12px;">
             <option value="">Team...</option>
           </select>
-          <select class="input" id="grant-stone" style="width:90px">
+          <select class="input" id="grant-stone" style="width:100px; padding: 6px; font-size: 12px;">
             <option value="power">🔴 Power</option>
             <option value="reality">🟡 Reality</option>
             <option value="space">🔵 Space</option>
+            <option value="time">🟢 Time</option>
+            <option value="soul">🟠 Soul</option>
           </select>
-          <button class="btn btn-sm" onclick="grantStone()">Grant Stone</button>
+          <button class="btn btn-sm" onclick="grantStone()" style="padding: 6px 12px;">Grant</button>
         </div>
-
       </div>
 
       <div class="panel-section">
-        <div class="panel-section-title">Event Log</div>
+        <div class="panel-section-title" style="display:flex; justify-content:space-between; align-items:center">
+          Event Log
+          <button class="btn btn-danger" onclick="document.getElementById('event-log').innerHTML=''" style="padding: 2px 8px; font-size: 10px; width: auto; border-radius: 4px; height: auto;">Clear</button>
+        </div>
         <div id="event-log"></div>
       </div>
     </div>
@@ -430,7 +435,10 @@
             <button class="btn btn-secondary" onclick="showLeaderboard()">📊 SHOW LB</button>
           </div>
           <div class="divider"></div>
-          <button class="btn btn-danger btn-sm" onclick="endGame()" style="width:100%">⛔ END GAME</button>
+          <div class="btn-row">
+            <button class="btn btn-danger btn-sm" onclick="endGame()" style="flex:1">⛔ END GAME</button>
+            <button class="btn btn-danger btn-sm" onclick="destroyRoom()" style="flex:1;background:var(--wrong);color:#fff;border-color:var(--wrong)">🗑️ DESTROY ROOM</button>
+          </div>
         </div>
 
         <div class="panel-section">
@@ -493,6 +501,15 @@
 </div>
 
 <script>
+function escapeHTML(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[&<>'"\/]/g, function (s) {
+    return {
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;', '/': '&#x2F;'
+    }[s];
+  });
+}
+
 const socket = io();
 let roomCode = null;
 let appState = {
@@ -515,11 +532,14 @@ const STONE_IMAGES = {
   power: 'https://placehold.co/48x48?text=POW',
   reality: 'https://placehold.co/48x48?text=REA',
   space: 'https://placehold.co/48x48?text=SPA',
+  time: 'https://placehold.co/48x48/228b22/FFFFFF?text=TIM',
+  soul: 'https://placehold.co/48x48/ff8c00/FFFFFF?text=SOU',
 };
 
 // =================== SETUP ===================
 function createRoom() {
-  socket.emit('admin:createRoom', {}, (res) => {
+  const passcode = document.getElementById('admin-passcode').value;
+  socket.emit('admin:createRoom', { passcode }, (res) => {
     if (res.error) { document.getElementById('setup-error').textContent = res.error; return; }
     roomCode = res.roomCode;
     document.getElementById('display-code').textContent = res.roomCode;
@@ -531,8 +551,9 @@ function createRoom() {
 
 function reconnectRoom() {
   const code = document.getElementById('rejoin-code').value.trim().toUpperCase();
+  const passcode = document.getElementById('admin-passcode').value;
   if (!code) return;
-  socket.emit('admin:reconnect', { roomCode: code }, (res) => {
+  socket.emit('admin:reconnect', { roomCode: code, passcode }, (res) => {
     if (res.error) { document.getElementById('setup-error').textContent = res.error; return; }
     roomCode = code;
     socket.roomCode = code;
@@ -605,15 +626,17 @@ function renderTeamList() {
   el.innerHTML = appState.teams.map(t => `
     <div class="team-row">
       <div class="t-dot ${t.connected ? 'online' : ''}"></div>
-      <div class="t-avatar"><img src="${t.avatar || DEFAULT_AVATAR}" alt="Avatar"></div>
-      <div class="t-name">${t.name}</div>
+      <div class="t-avatar"><img src="${escapeHTML(t.avatar || DEFAULT_AVATAR)}" alt="Avatar"></div>
+      <div class="t-name">${escapeHTML(t.name)}</div>
       <div class="t-stones">
         ${(t.stones?.power || 0) > 0 ? `<span class="t-stone"><img class="avatar-img" src="${STONE_IMAGES.power}" alt="Power">${t.stones.power}</span>` : ''}
         ${(t.stones?.reality || 0) > 0 ? `<span class="t-stone"><img class="avatar-img" src="${STONE_IMAGES.reality}" alt="Reality">${t.stones.reality}</span>` : ''}
         ${(t.stones?.space || 0) > 0 ? `<span class="t-stone"><img class="avatar-img" src="${STONE_IMAGES.space}" alt="Space">${t.stones.space}</span>` : ''}
+        ${(t.stones?.time || 0) > 0 ? `<span class="t-stone"><img class="avatar-img" src="${STONE_IMAGES.time}" alt="Time">${t.stones.time}</span>` : ''}
+        ${(t.stones?.soul || 0) > 0 ? `<span class="t-stone"><img class="avatar-img" src="${STONE_IMAGES.soul}" alt="Soul">${t.stones.soul}</span>` : ''}
       </div>
       <div class="t-score">${t.totalScore || 0}</div>
-      <button class="btn btn-danger btn-sm" onclick="kickTeam('${t.name.replace(/'/g,"\\'")}')">✕</button>
+      <button class="btn btn-danger btn-sm" onclick="kickTeam('${escapeHTML(t.name).replace(/'/g,"\\'")}')">✕</button>
     </div>
   `).join('');
   appState.teams.forEach(t => {
@@ -701,6 +724,11 @@ function showLeaderboard() {
 function endGame() {
   if (!confirm('End the game for everyone?')) return;
   socket.emit('admin:endGame');
+}
+
+function destroyRoom() {
+  if (!confirm('WARNING: This will instantly destroy the room and disconnect everyone. Are you sure?')) return;
+  socket.emit('admin:destroyRoom');
 }
 
 function refreshLeaderboard() {
@@ -905,8 +933,8 @@ function renderAdminLB(lb) {
       const timeStr = `${Math.floor(t_sec/60)}:${String(t_sec%60).padStart(2,'0')}`;
       return `<tr>
         <td><span class="rank-badge ${rankClass}">${rankSymbol}</span></td>
-        <td><img class="avatar-img" src="${t.avatar || DEFAULT_AVATAR}" alt="Avatar"></td>
-        <td style="font-weight:700">${t.name} <span style="color:var(--text-dim);font-size:11px">${t.connected?'●':'○'}</span></td>
+        <td><img class="avatar-img" src="${escapeHTML(t.avatar || DEFAULT_AVATAR)}" alt="Avatar"></td>
+        <td style="font-weight:700">${escapeHTML(t.name)} <span style="color:var(--text-dim);font-size:11px">${t.connected?'●':'○'}</span></td>
         <td style="color:var(--gold);font-weight:700;font-size:16px">${t.totalScore}</td>
         <td style="color:var(--text-dim);font-size:12px">${timeStr}</td>
         ${t.phaseScores?.map(s => `<td style="font-size:12px;color:var(--text-dim)">${s}</td>`).join('') || ''}
@@ -932,7 +960,7 @@ function addAnswerEntry(data) {
   const avatar = team?.avatar || DEFAULT_AVATAR;
   const div = document.createElement('div');
   div.style.cssText = 'padding:5px 8px;border-radius:5px;background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.2);margin-bottom:4px;display:flex;align-items:center;gap:6px;font-size:13px;';
-  div.innerHTML = `<img class="avatar-img" src="${avatar}" alt="Avatar"><span style="flex:1">${data.teamName}</span><span style="color:var(--text-dim);">${(data.responseTime / 1).toFixed(1)}s</span><span style="color:var(--correct)">✓</span>`;
+  div.innerHTML = `<img class="avatar-img" src="${escapeHTML(avatar)}" alt="Avatar"><span style="flex:1">${escapeHTML(data.teamName)}</span><span style="color:var(--text-dim);">${(data.responseTime / 1).toFixed(1)}s</span><span style="color:var(--correct)">✓</span>`;
   feed.insertBefore(div, feed.firstChild);
   answerCount++;
   document.getElementById('ans-count').textContent = answerCount;
@@ -948,7 +976,7 @@ function addStoneEntry(data) {
   const avatar = team?.avatar || DEFAULT_AVATAR;
   const div = document.createElement('div');
   div.style.cssText = 'padding:5px 8px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);margin-bottom:4px;display:flex;gap:6px;align-items:center;font-size:13px;';
-  div.innerHTML = `<img class="avatar-img" src="${avatar}" alt="Avatar"><span>${data.teamName}</span><span style="margin-left:auto"><img class="avatar-img" src="${STONE_IMAGES[data.stoneType]}" alt="Stone"> ×${data.stonesLeft} left</span>`;
+  div.innerHTML = `<img class="avatar-img" src="${escapeHTML(avatar)}" alt="Avatar"><span>${escapeHTML(data.teamName)}</span><span style="margin-left:auto"><img class="avatar-img" src="${STONE_IMAGES[data.stoneType]}" alt="Stone"> ×${data.stonesLeft} left</span>`;
   feed.insertBefore(div, feed.firstChild);
 }
 
@@ -960,6 +988,7 @@ function addLog(msg, type = '') {
   const t = new Date().toLocaleTimeString('en', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
   d.textContent = `[${t}] ${msg}`;
   log.insertBefore(d, log.firstChild);
+  if (log.children.length > 50) log.removeChild(log.lastChild);
 }
 
 // =================== SOCKET EVENTS ===================
@@ -1039,9 +1068,9 @@ socket.on('questionEnded', (data) => {
   const resultHtml = data.results.map(r => {
     const color = r.correct ? 'var(--correct)' : r.answer !== null ? 'var(--wrong)' : 'var(--text-dim)';
     return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)">
-      <img class="avatar-img" src="${appState.teams.find(t=>t.name===r.teamName)?.avatar||DEFAULT_AVATAR}" alt="Avatar">
-      <span style="flex:1;font-size:13px">${r.teamName}</span>
-      <span style="color:${color};font-size:12px">${r.answer !== null ? labels[r.answer] : '—'}</span>
+      <img class="avatar-img" src="${escapeHTML(appState.teams.find(t=>t.name===r.teamName)?.avatar||DEFAULT_AVATAR)}" alt="Avatar">
+      <span style="flex:1;font-size:13px">${escapeHTML(r.teamName)}</span>
+      <span style="color:${color};font-size:12px">${r.isTextAnswer ? escapeHTML(r.answer || '—') : (r.answer !== null ? labels[r.answer] : '—')}</span>
       <span style="color:var(--gold);font-weight:700;font-size:14px">+${r.score}</span>
     </div>`;
   }).join('');
@@ -1124,6 +1153,15 @@ socket.on('gameEnded', (data) => {
   renderAdminLB(data.leaderboard);
   updateTopbar();
   clearTimerDisplay();
+});
+
+socket.on('roomDestroyed', () => {
+  alert('Room destroyed by admin.');
+  location.reload();
+});
+
+socket.on('timeExtended', (data) => {
+  addLog(`+${data.additionalSeconds}s (Time Stone by ${escapeHTML(data.teamName)})`, 'gold');
 });
 
 socket.on('teamList', (data) => {
