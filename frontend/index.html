@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚡ Avengers Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@400;500;600;700&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="/socket.io/socket.io.js"></script>
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+<body>
+<div id="stars"></div>
+<div class="conn-status" id="connStatus"></div>
+<div id="toast"></div>
+
+<!-- ========= JOIN SCREEN ========= -->
+<div class="screen active" id="screen-join">
+  <div class="screen-inner">
+    <div class="logo">AVENGERS</div>
+    <div class="logo-sub">Infinity Quiz</div>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">Room Code</label>
+        <input class="form-input upper" id="inp-code" type="text" maxlength="6" placeholder="ENTER CODE" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Team Name</label>
+        <input class="form-input" id="inp-team" type="text" maxlength="24" placeholder="Your team name" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Choose Your Avatar</label>
+        <div class="avatar-grid" id="avatarGrid"></div>
+      </div>
+      <div class="error-text" id="joinError"></div>
+      <button class="btn" id="btnJoin" onclick="joinGame()">ASSEMBLE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========= WAITING ROOM ========= -->
+<div class="screen" id="screen-waiting">
+  <div class="screen-inner">
+    <div class="logo">AVENGERS</div>
+    <div class="logo-sub">Infinity Quiz</div>
+    <div class="card">
+      <div class="waiting-header">YOU'RE IN</div>
+      <div class="team-display">
+        <img class="team-avatar-big" id="wt-avatar" alt="Team avatar">
+        <div>
+          <div class="team-info-name" id="wt-name">Team Name</div>
+          <div class="team-info-sub">READY FOR BATTLE</div>
+        </div>
+        <div class="pulse-dot"></div>
+      </div>
+      <p class="waiting-msg">Waiting for the admin to start the game...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========= PHASE BANNER ========= -->
+<div class="screen" id="screen-phase" style="background:radial-gradient(ellipse at center, rgba(201,168,76,0.15) 0%, transparent 70%)">
+  <div class="screen-inner" style="text-align:center">
+    <div class="phase-label">PHASE</div>
+    <div class="phase-number" id="phaseNum">1</div>
+    <div class="phase-label" style="margin-top:4px;letter-spacing:4px" id="phaseOf">OF 5</div>
+  </div>
+</div>
+
+<!-- ========= QUESTION SCREEN ========= -->
+<div class="screen" id="screen-question">
+  <div class="hud">
+    <img class="hud-avatar" id="q-hud-avatar" alt="Team avatar">
+    <div>
+      <div class="hud-team" id="q-hud-team">Team</div>
+      <div class="hud-phase-q" id="q-hud-info">Phase 1 · Q1</div>
+    </div>
+    <div>
+      <div class="hud-score" id="q-hud-score">0</div>
+      <div class="hud-phase-q">pts</div>
+    </div>
+  </div>
+
+  <div class="screen-inner" style="width:100%;max-width:560px">
+    <div class="timer-ring-container">
+      <div class="timer-ring">
+        <svg viewBox="0 0 80 80" width="80" height="80">
+          <circle class="timer-ring-bg" cx="40" cy="40" r="35"/>
+          <circle class="timer-ring-fg" id="timerArc" cx="40" cy="40" r="35"/>
+        </svg>
+        <div class="timer-value" id="timerVal">30</div>
+      </div>
+    </div>
+
+    <div class="question-phase-info" id="q-phase-info">PHASE 1 · QUESTION 1/5</div>
+    <div class="question-text" id="q-text" id="q-card">Question text here...</div>
+    <div class="question-media" id="q-media">
+      <img id="q-image" alt="Question media">
+    </div>
+    <div class="question-link" id="q-link-wrap">
+      <a class="btn btn-secondary" id="q-link" target="_blank" rel="noopener noreferrer">OPEN REFERENCE LINK</a>
+    </div>
+    <div class="options-grid" id="optionsGrid">
+      <button class="option-btn" data-i="0" onclick="selectAnswer(0)"></button>
+      <button class="option-btn" data-i="1" onclick="selectAnswer(1)"></button>
+      <button class="option-btn" data-i="2" onclick="selectAnswer(2)"></button>
+      <button class="option-btn" data-i="3" onclick="selectAnswer(3)"></button>
+    </div>
+    <div id="q-backup-label" style="display:none; text-align:center; color:var(--space); font-size:12px; letter-spacing:2px; margin-bottom:6px;">🔵 SPACE STONE — BACKUP QUESTION ACTIVE</div>
+    <div id="q-power-label" style="display:none; text-align:center; color:var(--power); font-size:12px; letter-spacing:2px;">🔴 POWER STONE — 2× SCORE ACTIVE</div>
+  </div>
+
+  <div class="stones-bar">
+    <div class="stones-label">Power Stones</div>
+    <div class="stones-row">
+      <button class="stone-btn stone-power" id="stone-power" onclick="useStone('power')">
+        <span class="s-icon"><img id="icon-power" alt="Power stone"></span>
+        <div>
+          <div>POWER</div>
+          <div class="s-count" id="cnt-power">0</div>
+        </div>
+      </button>
+      <button class="stone-btn stone-reality" id="stone-reality" onclick="useStone('reality')">
+        <span class="s-icon"><img id="icon-reality" alt="Reality stone"></span>
+        <div>
+          <div>REALITY</div>
+          <div class="s-count" id="cnt-reality">0</div>
+        </div>
+      </button>
+      <button class="stone-btn stone-space" id="stone-space" onclick="useStone('space')">
+        <span class="s-icon"><img id="icon-space" alt="Space stone"></span>
+        <div>
+          <div>SPACE</div>
+          <div class="s-count" id="cnt-space">0</div>
+        </div>
+      </button>
+      <button class="stone-btn stone-time" id="stone-time" onclick="useStone('time')">
+        <span class="s-icon"><img id="icon-time" alt="Time stone"></span>
+        <div>
+          <div>TIME</div>
+          <div class="s-count" id="cnt-time">0</div>
+        </div>
+      </button>
+      <button class="stone-btn stone-soul" id="stone-soul" onclick="useStone('soul')">
+        <span class="s-icon"><img id="icon-soul" alt="Soul stone"></span>
+        <div>
+          <div>SOUL</div>
+          <div class="s-count" id="cnt-soul">0</div>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========= RESULT SCREEN ========= -->
+<div class="screen" id="screen-result">
+  <div class="screen-inner" style="text-align:center">
+    <div class="result-icon" id="r-icon">✅</div>
+    <div class="result-score" id="r-score">+75</div>
+    <div class="result-label">POINTS EARNED</div>
+    <div class="result-answer-reveal" id="r-answer-box">
+      <div class="result-answer-label">Correct Answer</div>
+      <div class="result-answer-text correct-ans" id="r-correct-text">Answer text</div>
+    </div>
+    <div class="result-total">Total Score: <span id="r-total">0</span></div>
+    <p style="color:var(--text-dim);font-size:13px;margin-top:16px;letter-spacing:1px;animation:blink 2s infinite">Waiting for next question...</p>
+  </div>
+</div>
+
+<!-- ========= LEADERBOARD SCREEN ========= -->
+<div class="screen" id="screen-leaderboard">
+  <div class="screen-inner">
+    <div class="lb-title" id="lb-title">⚡ PHASE 1 COMPLETE</div>
+    <div id="lb-list" class="scroll-view"></div>
+    <p style="text-align:center;color:var(--text-dim);font-size:12px;margin-top:16px;letter-spacing:2px;animation:blink 2s infinite" id="lb-wait">Waiting for admin...</p>
+  </div>
+</div>
+
+<!-- ========= STONE SELECTION SCREEN ========= -->
+<div class="screen" id="screen-stone-select">
+  <div class="screen-inner">
+    <div class="stone-select-title">🏆 TOP 3 — CHOOSE YOUR STONE</div>
+    <div class="stone-select-sub" id="ss-sub">Select a Power Stone to add to your arsenal</div>
+    <div id="ss-choices" style="display:none">
+      <div class="stone-choice stone-choice-power" onclick="pickStone('power')">
+        <div class="stone-choice-icon"><img id="choice-power" alt="Power stone"></div>
+        <div class="stone-choice-name">POWER STONE</div>
+        <div class="stone-choice-desc">Doubles your score if activated within the first 10 seconds of any question</div>
+      </div>
+      <div class="stone-choice stone-choice-reality" onclick="pickStone('reality')">
+        <div class="stone-choice-icon"><img id="choice-reality" alt="Reality stone"></div>
+        <div class="stone-choice-name">REALITY STONE</div>
+        <div class="stone-choice-desc">Instantly eliminates 2 wrong answer options from the current question</div>
+      </div>
+      <div class="stone-choice stone-choice-space" onclick="pickStone('space')">
+        <div class="stone-choice-icon"><img id="choice-space" alt="Space stone"></div>
+        <div class="stone-choice-name">SPACE STONE</div>
+        <div class="stone-choice-desc">Replaces your current question with a backup question from the reserve pool</div>
+      </div>
+    </div>
+    <div class="watching-msg" id="ss-watch" style="display:none">
+      🏆 Top 3 teams are selecting their Power Stones...<br>
+      <small style="opacity:0.6">Stand by</small>
+    </div>
+    <button class="btn" id="ss-confirm" onclick="confirmStone()" style="display:none;margin-top:16px">CLAIM THIS STONE</button>
+  </div>
+</div>
+
+<!-- ========= GAME ENDED ========= -->
+<div class="screen" id="screen-ended">
+  <div class="screen-inner" style="text-align:center">
+    <div class="winner-trophy" id="end-trophy">🏆</div>
+    <div class="winner-name" id="end-winner">AVENGERS WIN!</div>
+    <div class="winner-sub">THE INFINITY QUIZ IS COMPLETE</div>
+    <div id="end-lb" class="scroll-view"></div>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>
