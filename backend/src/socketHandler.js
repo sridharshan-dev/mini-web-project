@@ -458,14 +458,7 @@ function setupSocket(io) {
       }
     });
 
-    socket.on('player:selectStone', (data, cb) => {
-      const room = rooms.get(socket.roomCode);
-      if (!room) return cb({ error: 'Room not found' });
-      if (!room.stoneSelectionActive) return cb({ error: 'Stone selection not active' });
-      const team = room.teams.get(socket.teamName);
-      if (!team) return cb({ error: 'Team not found' });
-      return cb({ error: 'Stone selection is admin-controlled only' });
-    });
+
 
     // ===== DISCONNECT =====
     socket.on('disconnect', () => {

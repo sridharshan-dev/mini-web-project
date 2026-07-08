@@ -388,26 +388,6 @@ function useStone(type) {
   });
 }
 
-// =================== STONE PICK ===================
-function pickStone(type) {
-  if (!state.eligibleForStone) return;
-  showToast('Stone selection is handled by the admin.', 'error');
-}
-
-function confirmStone() {
-  if (!state.pendingStoneChoice) return;
-  socket.emit('player:selectStone', { stoneType: state.pendingStoneChoice }, (res) => {
-    if (res.error) { showToast(res.error, 'error'); return; }
-    state.stones = res.stones;
-    showToast(`🏆 ${state.pendingStoneChoice.toUpperCase()} STONE claimed!`, 'gold');
-    document.getElementById('ss-choices').style.display = 'none';
-    document.getElementById('ss-confirm').style.display = 'none';
-    document.getElementById('ss-sub').textContent = `✅ ${state.pendingStoneChoice.toUpperCase()} STONE added to your arsenal!`;
-    state.eligibleForStone = false;
-    state.pendingStoneChoice = null;
-    updateStoneUI();
-  });
-}
 
 // =================== LEADERBOARD ===================
 function renderLeaderboard(lb, containerId) {
@@ -578,10 +558,7 @@ function handleStoneSelection(data) {
   state.pendingStoneChoice = null;
   const eligibleNames = data.eligible.map(e => e.name);
 
-  document.getElementById('ss-choices').style.display = 'none';
   document.getElementById('ss-watch').style.display = 'block';
-  document.getElementById('ss-confirm').style.display = 'none';
-  document.querySelectorAll('.stone-choice').forEach(el => el.classList.remove('selected'));
 
   document.getElementById('ss-sub').textContent = `Top 3 teams: ${eligibleNames.join(', ')} — Admin assigns stones.`;
   showScreen('screen-stone-select');
@@ -596,8 +573,6 @@ socket.on('yourTurnToSelectStone', () => {
 });
 
 socket.on('stoneSelectionLocked', () => {
-  document.getElementById('ss-choices').style.display = 'none';
-  document.getElementById('ss-confirm').style.display = 'none';
   document.getElementById('ss-watch').style.display = 'none';
   document.getElementById('ss-sub').textContent = 'Stone selection complete. Get ready for the next phase!';
   showToast('Stone selection complete!', 'gold');

@@ -1,4 +1,4 @@
-# Avengers Multiplayer Quiz App
+# Trivia Arena
 
 A real-time, room-based multiplayer quiz game with a dedicated admin control panel.
 Built with **Node.js + Express + Socket.IO** and a themed client UI for players.
@@ -12,7 +12,7 @@ Built with **Node.js + Express + Socket.IO** and a themed client UI for players.
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [How It Works (Game Flow)](#how-it-works-game-flow)
-- [Infinity Stone Mechanics](#infinity-stone-mechanics)
+- [Power-Up Mechanics](#power-up-mechanics)
 - [Scoring System](#scoring-system)
 - [Question System](#question-system)
 - [Setup & Run](#setup--run)
@@ -29,12 +29,12 @@ Built with **Node.js + Express + Socket.IO** and a themed client UI for players.
 
 ## Project Overview
 
-This project is an **Avengers-themed competitive quiz platform** where:
+This project is an **real-time competitive quiz platform** where:
 
 - One host uses the **Admin Panel** to create/reconnect a room and control game progression.
 - Multiple teams join from the **Player UI** using a room code, team name, and avatar.
 - Questions are asked in phases, scored in real time, and ranked on a live leaderboard.
-- Infinity Stones add strategy and variation to gameplay.
+- Power-Ups add strategy and variation to gameplay.
 
 The application is designed for classrooms, events, and friendly team competitions on local Wi-Fi or LAN.
 
@@ -47,7 +47,7 @@ The application is designed for classrooms, events, and friendly team competitio
 - Five quiz phases with configurable questions and per-question timers.
 - Real-time question delivery, timer ticks, answer locking, and result broadcast.
 - Live leaderboard with tie-break using total response time.
-- Infinity Stone gameplay (Power, Reality, Space).
+- Power-Up gameplay (Power, Reality, Space).
 - In-browser question editor from admin panel (including backup question set).
 - Team connection status tracking and kick controls.
 - Support for both:
@@ -67,37 +67,92 @@ The application is designed for classrooms, events, and friendly team competitio
 
 ---
 
-## Project Structure
+## Project Structure & File Details
 
 ```text
-CrackNCode/
+trivia-arena/
 ├── package.json              # scripts + dependencies
-├── server.js                 # Express + Socket.IO server, room/game logic
 ├── README.md
-└── public/
-		├── index.html            # Player client
-		├── admin.html            # Admin control panel
-		└── questions.json        # Phase questions + backup pool (persistent)
+├── backend/
+│   ├── server.js                 # Entry point: Express + Socket.IO server setup and initialization
+│   ├── data/
+│   │   └── questions.json        # Persistent storage for quiz questions, phases, and backup pool
+│   └── src/
+│       ├── gameLogic.js          # Core game logic: scoring calculations, phase state, time checks
+│       ├── questionsManager.js   # Interacts with questions.json to read, update, and save questions
+│       ├── roomManager.js        # Manages in-memory state of active rooms, connected teams, and admin sessions
+│       └── socketHandler.js      # Socket.IO event router: handles client connections, answering, and phase triggers
+└── frontend/
+    ├── index.html                # Player client: UI for teams to join, wait, answer questions, and view leaderboards
+    ├── admin.html                # Admin control panel: UI for the host to manage the game flow
+    ├── css/
+    │   ├── style.css             # Main stylesheet for the player interface
+    │   └── admin.css             # Stylesheet for the admin interface
+    └── js/
+        ├── main.js               # Client-side logic for the player UI (joining room, submitting answers, using stones)
+        ├── admin.js              # Client-side logic for the admin panel (creating room, triggering questions, kicking teams)
+        ├── bg.js                 # Dynamic space-black background canvas generator and interactive logic
+        └── bg-physics.js         # Particle physics, animations, and glowing shockwave rendering for the background
 ```
 
----
+### Backend Functionality
+- **`backend/server.js`**: Initializes the Express server and Socket.IO. It sets up the static file serving for the frontend and delegates socket connection handling to `socketHandler.js`.
+- **`backend/src/socketHandler.js`**: Listens to all incoming socket events (from both players and the admin) and routes them to the appropriate functions in `roomManager.js` and `gameLogic.js`.
+- **`backend/src/roomManager.js`**: Maintains the state of all active game rooms. This includes tracking connected teams, their scores, their power-ups, and the admin's connection status.
+- **`backend/src/gameLogic.js`**: Handles the core rules of the game. It calculates scores based on response time, applies Power-Up multipliers (like the Power Stone), and determines leaderboard rankings.
+- **`backend/src/questionsManager.js`**: A utility module that reads from and writes to `backend/data/questions.json`. It provides the active questions for the current phase and serves backup questions for the Space Stone.
 
-## How It Works (Game Flow)
-
-1. Admin opens `/admin.html` and creates a room.
-2. Players open `/`, enter room code + team name + avatar, and join.
-3. Admin starts a phase (1-5).
-4. Admin triggers next question.
-5. Server sends question to each team (admin gets question + correct answer view).
-6. Timer runs server-side; players submit answer before timeout.
-7. On timeout or force end, server computes scores and emits results.
-8. At phase end, server emits phase leaderboard.
-9. Admin can trigger stone selection/grants for top performers.
-10. After final phase, admin can end game and show final leaderboard.
+### Frontend Functionality
+- **Player Interface (`frontend/index.html` & `frontend/js/main.js`)**: Provides a responsive interface for players. It handles joining a room, displaying the current question, capturing the user's answer (multiple choice or text), and rendering the post-game leaderboard.
+- **Admin Interface (`frontend/admin.html` & `frontend/js/admin.js`)**: The command center for the host. It provides controls to start phases, reveal questions, lock answers, grant Power-Ups, and monitor team connections. It also includes a built-in question editor.
+- **Dynamic Background (`frontend/js/bg.js` & `frontend/js/bg-physics.js`)**: Renders a visually immersive, interactive canvas background that responds to mouse movements and game events (like shockwaves when an answer is locked).
 
 ---
 
-## Infinity Stone Mechanics
+## System Workflow (Game Flow)
+
+1. **Room Creation:**
+   - The Admin opens `/admin.html` and clicks "CREATE NEW ROOM".
+   - `admin.js` emits `admin:createRoom` to the server.
+   - `socketHandler.js` receives the event and calls `roomManager.js` to initialize a new room state.
+   - The server replies with a unique 6-character room code.
+
+2. **Player Joining:**
+   - Players open `/` (`index.html`), enter the room code, a team name, and select an avatar.
+   - `main.js` emits `player:join` with these details.
+   - The server validates the room code and adds the team to the room in `roomManager.js`.
+   - The server broadcasts `teamJoined` to update the Admin panel.
+
+3. **Starting the Game & Phases:**
+   - The Admin clicks to start Phase 1. `admin.js` emits `admin:startPhase`.
+   - `gameLogic.js` updates the room state to `PHASE_ACTIVE` and loads the Phase 1 questions via `questionsManager.js`.
+   - The server broadcasts `phaseStarted` to all players, transitioning their UI.
+
+4. **Asking Questions:**
+   - The Admin clicks "NEXT QUESTION". `admin.js` emits `admin:nextQuestion`.
+   - The server fetches the next question, sets the room state to `QUESTION_ACTIVE`, and starts a server-side timer.
+   - The server emits `question` to players and `question:admin` to the host (which includes the correct answer).
+
+5. **Answering & Scoring:**
+   - Players select an option or type an answer. `main.js` emits `player:submitAnswer`.
+   - The server records the answer and the exact timestamp.
+   - When the timer expires (or the Admin forces it to end), `gameLogic.js` processes all answers.
+   - Scores are calculated based on response speed and active Power-Ups.
+   - The server emits `questionResult` to all clients, showing who was correct and updating the live scores.
+
+6. **Power-Ups:**
+   - Top-performing teams can be granted Power-Ups by the Admin.
+   - Players activate stones via their UI (`player:useStone`).
+   - For example, if a player uses the Space Stone, `socketHandler.js` asks `questionsManager.js` for a backup question and sends it directly to that specific player.
+
+7. **End of Game:**
+   - After all phases, the Admin clicks "END GAME".
+   - The server transitions to `GAME_ENDED` and broadcasts `showLeaderboard`.
+   - Both Admin and Player UIs display the final rankings, calculated by `gameLogic.js`.
+
+---
+
+## Power-Up Mechanics
 
 Stones are granted by admin and consumed by players per use.
 
