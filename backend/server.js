@@ -35,7 +35,7 @@ setInterval(() => {
 // =================== START ===================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n⚡ AVENGERS QUIZ SERVER RUNNING`);
+  console.log(`\n🎯 TRIVIA ARENA SERVER RUNNING`);
   console.log(`──────────────────────────────────`);
   console.log(`🔑 Admin Passcode: ${ADMIN_PASSCODE}`);
   console.log(`📱 Player UI: http://localhost:${PORT}/`);

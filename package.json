@@ -1,7 +1,7 @@
 {
-  "name": "avengers-quiz",
+  "name": "trivia-arena",
   "version": "1.0.0",
-  "description": "Avengers-themed multiplayer quiz system",
+  "description": "Trivia Arena multiplayer quiz system",
   "main": "server.js",
   "scripts": {
     "start": "node backend/server.js",

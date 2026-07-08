@@ -27,23 +27,23 @@ let state = {
 
 const DEFAULT_AVATAR = 'https://placehold.co/96x96?text=TEAM';
 const AVATARS = [
-  'https://ik.imagekit.io/rsqu64arg/icons/hulk.jpeg?updatedAt=1771481306706',
-  'https://ik.imagekit.io/rsqu64arg/icons/thor.jpeg?updatedAt=1771481306677',
-  'https://ik.imagekit.io/rsqu64arg/icons/black%20panther.jpeg?updatedAt=1771481306681',
-  'https://ik.imagekit.io/rsqu64arg/icons/ironman.jpeg?updatedAt=1771481306668',
-  'https://ik.imagekit.io/rsqu64arg/icons/Black%20Widow.jpg?updatedAt=1771481306646',
-  'https://ik.imagekit.io/rsqu64arg/icons/download%20(1).jpg?updatedAt=1771481306588',
-  'https://ik.imagekit.io/rsqu64arg/icons/download%20(3).jpg?updatedAt=1771481306552',
-  'https://ik.imagekit.io/rsqu64arg/icons/download%20(4).jpg?updatedAt=1771481306548',
-  'https://ik.imagekit.io/rsqu64arg/icons/ant.jpeg?updatedAt=1771481306535',
-  'https://ik.imagekit.io/rsqu64arg/icons/download%20(2).jpg?updatedAt=1771481306519',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Alpha',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Beta',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Gamma',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Delta',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Epsilon',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Zeta',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Eta',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Theta',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Iota',
+  'https://api.dicebear.com/7.x/bottts/svg?seed=Kappa',
 ];
 const STONE_IMAGES = {
-  power: 'https://ik.imagekit.io/3ku7rvecvz/power.jpeg',
-  reality: 'https://ik.imagekit.io/3ku7rvecvz/reality.jpg',
-  space: 'https://ik.imagekit.io/3ku7rvecvz/space.jpg',
-  time: 'https://placehold.co/48x48/228b22/FFFFFF?text=TIM',
-  soul: 'https://placehold.co/48x48/ff8c00/FFFFFF?text=SOU',
+  power: 'https://placehold.co/48x48/8b5cf6/FFFFFF?text=PWR',
+  reality: 'https://placehold.co/48x48/a78bfa/FFFFFF?text=RLT',
+  space: 'https://placehold.co/48x48/3b82f6/FFFFFF?text=SPC',
+  time: 'https://placehold.co/48x48/10b981/FFFFFF?text=TIM',
+  soul: 'https://placehold.co/48x48/f59e0b/FFFFFF?text=SOL',
 };
 
 // =================== INIT ===================
@@ -112,7 +112,7 @@ function joinGame(auto = false) {
 
   socket.emit('player:join', { roomCode: code, teamName: team, avatar, sessionToken }, (res) => {
     document.getElementById('btnJoin').disabled = false;
-    document.getElementById('btnJoin').textContent = 'ASSEMBLE';
+    document.getElementById('btnJoin').textContent = 'CONNECT';
     if (res.error) { errEl.textContent = res.error; return; }
 
     state.teamName = team; state.avatar = avatar; state.roomCode = code;
@@ -356,9 +356,9 @@ function submitTextAnswer() {
 }
 
 function useStone(type) {
-  if (state.currentPhase < 2) { showToast('Stones unlock from Phase 2!', 'error'); return; }
-  if ((state.stones[type] || 0) <= 0) { showToast('No ' + type + ' stone!', 'error'); return; }
-  if (state.stonesUsedThisQ.includes(type)) { showToast('Already used ' + type + ' stone this question!', 'error'); return; }
+  if (state.currentPhase < 2) { showToast('Boosts unlock from Phase 2!', 'error'); return; }
+  if ((state.stones[type] || 0) <= 0) { showToast('No ' + type + ' boost!', 'error'); return; }
+  if (state.stonesUsedThisQ.includes(type)) { showToast('Already used ' + type + ' boost this question!', 'error'); return; }
   if (type === 'power' && state.lockedAnswer !== null) { showToast('Cannot activate after answering!', 'error'); return; }
 
   socket.emit('player:useStone', { stoneType: type }, (res) => {

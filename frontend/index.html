@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚡ Avengers Quiz</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@400;500;600;700&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>🎯 Trivia Arena</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
 <link rel="stylesheet" href="css/style.css">
 
 </head>
 <body>
-<div id="stars"></div>
+
 <div class="conn-status" id="connStatus"></div>
 <div id="toast"></div>
 
 <!-- ========= JOIN SCREEN ========= -->
 <div class="screen active" id="screen-join">
   <div class="screen-inner">
-    <div class="logo">AVENGERS</div>
+    <div class="logo">TRIVIA ARENA</div>
     <div class="logo-sub">Infinity Quiz</div>
     <div class="card">
       <div class="form-group">
@@ -33,7 +33,7 @@
         <div class="avatar-grid" id="avatarGrid"></div>
       </div>
       <div class="error-text" id="joinError"></div>
-      <button class="btn" id="btnJoin" onclick="joinGame()">ASSEMBLE</button>
+      <button class="btn" id="btnJoin" onclick="joinGame()">CONNECT</button>
     </div>
   </div>
 </div>
@@ -41,7 +41,7 @@
 <!-- ========= WAITING ROOM ========= -->
 <div class="screen" id="screen-waiting">
   <div class="screen-inner">
-    <div class="logo">AVENGERS</div>
+    <div class="logo">TRIVIA ARENA</div>
     <div class="logo-sub">Infinity Quiz</div>
     <div class="card">
       <div class="waiting-header">YOU'RE IN</div>
@@ -210,12 +210,14 @@
 <div class="screen" id="screen-ended">
   <div class="screen-inner" style="text-align:center">
     <div class="winner-trophy" id="end-trophy">🏆</div>
-    <div class="winner-name" id="end-winner">AVENGERS WIN!</div>
+    <div class="winner-name" id="end-winner">CHAMPIONS WIN!</div>
     <div class="winner-sub">THE INFINITY QUIZ IS COMPLETE</div>
     <div id="end-lb" class="scroll-view"></div>
   </div>
 </div>
 
 <script src="js/main.js"></script>
+  <script src="js/bg-physics.js"></script>
+  <script src="js/bg.js"></script>
 </body>
 </html>
